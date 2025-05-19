@@ -1,0 +1,37 @@
+[workspace]
+members = [".", "examples/hotpatching_ui", "macros"]
+
+[package]
+name = "bevy_simple_subsecond_system"
+version = "0.1.0"
+edition = "2024"
+exclude = ["examples"]
+
+[dependencies]
+bevy = { version = "0.16.0", default-features = true }
+dioxus-devtools = { version = "0.7.0-alpha.0" }
+bevy_simple_subsecond_system_macros = { path = "macros" }
+
+[dev-dependencies]
+bevy = "0.16"
+
+[lints.clippy]
+# Bevy supplies arguments to systems via dependency injection, so it's natural for systems to
+# request more than 7 arguments, which would undesirably trigger this lint.
+too_many_arguments = "allow"
+# Queries may access many components, which would undesirably trigger this lint.
+type_complexity = "allow"
+# Make sure macros use their standard braces, such as `[]` for `bevy_ecs::children!`.
+nonstandard_macro_braces = "warn"
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
