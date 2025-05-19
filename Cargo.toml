@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "examples/hotpatching_ui", "macros"]
+members = [".", "examples/*", "macros"]
 
 [package]
 name = "bevy_simple_subsecond_system"
@@ -11,9 +11,6 @@ exclude = ["examples"]
 bevy = { version = "0.16.0", default-features = true }
 dioxus-devtools = { version = "0.7.0-alpha.0" }
 bevy_simple_subsecond_system_macros = { path = "macros" }
-
-[dev-dependencies]
-bevy = "0.16"
 
 [lints.clippy]
 # Bevy supplies arguments to systems via dependency injection, so it's natural for systems to

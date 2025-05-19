@@ -4,6 +4,11 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
+        .insert_resource(UiDebugOptions {
+            // Enable UI debug overlay for better visualization
+            enabled: true,
+            ..default()
+        })
         .add_systems(Startup, setup)
         .add_systems(Update, configure_ui)
         .run();
@@ -22,17 +27,20 @@ fn setup(mut commands: Commands) {
 fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands) {
     commands.entity(*ui).despawn_related::<Children>().insert((
         Node {
-            flex_direction: FlexDirection::Row,
+            // You can change the `Node` however you want at runtime
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(20.0),
+
             ..default()
         },
         children![
             Text::new("Hello, world!"),
-            Text::new("Here's a little demo"),
-            Text::new("I can add new texts!"),
-            Text::new("I can add new texts!"),
-            Text::new("I can add new texts!"),
-            Text::new("I can add new texts!"),
-            Text::new("I can change existing texts!"),
+            Text::new("Try adding new texts below"),
         ],
     ));
 }
