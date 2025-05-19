@@ -5,6 +5,7 @@
 
 
 Hotpatch your Bevy systems, allowing you to change their code while the app is running and directly seeing the results!
+This is a intermediate solution you can use until [Bevy has implement this feature upstream](https://github.com/bevyengine/bevy/issues/19296).
 
 Powered by [Dioxus' subsecond](https://github.com/DioxusLabs/dioxus/releases/tag/v0.7.0-alpha.0#rust-hot-patching)
 
