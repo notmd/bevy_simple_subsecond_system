@@ -7,8 +7,8 @@
 Hotpatch your Bevy systems, allowing you to change their code while the app is running and directly seeing the results!
 This is a intermediate solution you can use until [Bevy has implement this feature upstream](https://github.com/bevyengine/bevy/issues/19296).
 
-Powered by [Dioxus' subsecond](https://github.com/DioxusLabs/dioxus/releases/tag/v0.7.0-alpha.0#rust-hot-patching)
-
+Powered by [Dioxus' subsecond](https://github.com/DioxusLabs/dioxus/releases/tag/v0.7.0-alpha.0#rust-hot-patching)  
+Please report all hotpatch-related problems to them :)
 
 ## First Time Installation
 
@@ -64,7 +64,6 @@ cargo binstall dioxus-cli@0.7.0-alpha.0
 Then make sure you're not using [LD as your linker](https://github.com/DioxusLabs/dioxus/issues/4144).
 Click your OS below on instructions for how to do this
 
-> [!IMPORTANT]  
 > In case you already configured a linker, setting `rustflags = ["-C", "link-arg=-fuse-ld=/path/to/your/linker"]` is surprisingly [not enough](https://github.com/DioxusLabs/dioxus/issues/4146)!
 
 <details>
