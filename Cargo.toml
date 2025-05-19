@@ -5,7 +5,13 @@ members = [".", "examples/*", "macros"]
 name = "bevy_simple_subsecond_system"
 version = "0.1.0"
 edition = "2024"
-exclude = ["examples"]
+authors = ["Jan Hohenheim <jan@hohenheim.ch>"]
+exclude = ["examples/"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/janhohenheim/bevy_simple_subsecond_system"
+description = "Hotpatch your Bevy systems, allowing you to change their code while the app is running and directly seeing the results!"
+keywords = ["bevy", "hotpatch", "subsecond", "dioxus"]
+categories = ["game-development"]
 
 [dependencies]
 bevy = { version = "0.16.0", default-features = true }
