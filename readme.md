@@ -188,6 +188,12 @@ e.g.
 dx serve --hot-patch --package ui
 ```
 
+## Known Limitations
+
+- Cannot combine mold as your Rust linker with a global target dir: https://github.com/DioxusLabs/dioxus/issues/4149
+- Attaching a debugger is problaby not going to work. Let me know if you try!
+
+
 ## Compatibility
 
 | bevy        | bevy_simple_subsecond_system |
