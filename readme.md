@@ -112,6 +112,11 @@ sudo mv ld ld-real
 sudo ln -s mold ld
 ```
 
+NixOS allows you to do this with
+```nix
+pkgs.mkShell.override {stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;}
+```
+
 </details>
 
 ## Usage
