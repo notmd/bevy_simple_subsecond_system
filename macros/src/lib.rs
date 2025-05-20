@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{ItemFn, Pat, PatIdent, parse_macro_input};
+use syn::{ItemFn, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -16,29 +16,17 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let output = &sig.output;
     let where_clause = &sig.generics.where_clause;
 
-    // Construct two sets of arguments:
-    // - `clean_inputs`: used for outer function (without `mut`)
-    // - `arg_idents`: the list of argument names for .call((...))
-    let mut clean_inputs = Vec::new();
-    let mut arg_idents = Vec::new();
+    // Collect the types for SystemState<(...)>
+    let mut param_types = Vec::new();
 
-    for input in &sig.inputs {
+    // Reconstruct the argument list for the hotpatched function
+    let inputs = &sig.inputs;
+
+    for input in inputs {
         match input {
             syn::FnArg::Typed(pat_type) => {
-                // Assume pattern is an identifier (no destructuring)
-                if let Pat::Ident(PatIdent { ident, .. }) = &*pat_type.pat {
-                    arg_idents.push(quote! { #ident });
-
-                    let ty = &pat_type.ty;
-                    let attrs = &pat_type.attrs;
-
-                    // Rebuild argument without `mut`
-                    clean_inputs.push(quote! {
-                        #(#attrs)* #ident: #ty
-                    });
-                } else {
-                    panic!("`#[hot]` only supports identifier patterns (no destructuring)");
-                }
+                let ty = &pat_type.ty;
+                param_types.push(quote! { #ty });
             }
             syn::FnArg::Receiver(_) => {
                 panic!("`#[hot]` does not support methods (`self` parameter)");
@@ -46,16 +34,19 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    // Rebuild the outer signature (stripped of `mut`)
+    // Outer function taking only `world: &mut World`
     let outer_fn = quote! {
-        #vis fn #fn_name #generics(#(#clean_inputs),*) #output #where_clause {
-            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_name).call((#(#arg_idents),*))
+        #vis fn #fn_name #generics(world: &mut bevy::ecs::world::World) #output #where_clause {
+            use bevy::ecs::system::SystemState;
+            let mut system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
+            let inputs = system_state.get(world);
+            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_name)
+                .call(inputs);
+            system_state.apply(world);
         }
     };
 
-    // The original hotpatched function
-    let inputs = &sig.inputs;
-
+    // Original logic becomes the hotpatched function
     let hotpatched_fn = quote! {
         #vis fn #hotpatched_name #generics(#inputs) #output #where_clause
             #block
