@@ -2,6 +2,10 @@
 name = "bevy_simple_subsecond_system_macros"
 version = "0.1.0"
 edition = "2024"
+authors = ["Jan Hohenheim <jan@hohenheim.ch>"]
+description = "Macros for bevy_simple_subsecond_system"
+repository = "https://github.com/janhohenheim/bevy_simple_subsecond_system"
+license = "MIT OR Apache-2.0"
 
 [lib]
 proc-macro = true
