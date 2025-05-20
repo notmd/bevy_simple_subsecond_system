@@ -3,7 +3,7 @@ members = [".", "examples/*", "macros"]
 
 [package]
 name = "bevy_simple_subsecond_system"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Jan Hohenheim <jan@hohenheim.ch>"]
 exclude = ["examples/"]
