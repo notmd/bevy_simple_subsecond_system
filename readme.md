@@ -112,6 +112,11 @@ sudo mv ld ld-real
 sudo ln -s mold ld
 ```
 
+NixOS allows you to do this with
+```nix
+pkgs.mkShell.override {stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;}
+```
+
 </details>
 
 ## Usage
@@ -185,20 +190,20 @@ fn greet() {
 
 Run the examples with
 ```sh
-dx serve --hot-patch --package name_of_the_example
+dx serve --hot-patch --example name_of_the_example
 ```
 
 e.g.
 ```sh
-dx serve --hot-patch --package ui
+dx serve --hot-patch --example ui
 ```
 
 ## Known Limitations
 
-- Cannot combine mold as your Rust linker with a global target dir: <https://github.com/DioxusLabs/dioxus/issues/4149>
+- Cannot [combine mold as your Rust linker with a global target dir](https://github.com/DioxusLabs/dioxus/issues/4149)
+- Using this [breaks dynamic linking](https://github.com/DioxusLabs/dioxus/issues/4154)
 - Attaching a debugger is problaby not going to work. Let me know if you try!
 - I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Probably. Let me know!
-
 
 ## Compatibility
 
