@@ -17,14 +17,19 @@ fn setup(mut commands: Commands) {
 }
 
 fn greet(world: &mut World) {
-    use bevy::ecs::system::SystemState;
-    let mut system_state: SystemState<(Single<&Greet>, Commands)> = SystemState::new(world);
-    let inputs = system_state.get(world);
-    bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(greet_hotpatched)
-        .call(inputs);
-    system_state.apply(world);
+    bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(
+        greet_hotpatched_exclusive,
+    )
+    .call((world,))
+    .unwrap();
 }
 
-fn greet_hotpatched(greet: Single<&Greet>, mut commands: Commands) {
+fn greet_hotpatched_exclusive(
+    world: &mut bevy::ecs::world::World,
+) -> std::result::Result<(), bevy::ecs::system::RegisteredSystemError> {
+    world.run_system_cached(greet_hotpatched_original)
+}
+
+fn greet_hotpatched_original(greet: Single<&Greet>, mut commands: Commands) {
     info!("{}", greet.0);
 }

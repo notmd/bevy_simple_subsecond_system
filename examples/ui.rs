@@ -19,7 +19,7 @@ fn setup(mut commands: Commands) {
 }
 
 #[hot]
-fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands) {
+fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands, time: Res<Time>) {
     commands.entity(*ui).despawn_related::<Children>().insert((
         Node {
             // You can change the `Node` however you want at runtime
@@ -28,7 +28,7 @@ fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands) {
             height: Val::Percent(100.0),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
+            flex_direction: FlexDirection::Row,
             row_gap: Val::Px(20.0),
 
             ..default()
