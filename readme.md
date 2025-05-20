@@ -10,6 +10,9 @@ This is a intermediate solution you can use until [Bevy has implement this featu
 Powered by [Dioxus' subsecond](https://github.com/DioxusLabs/dioxus/releases/tag/v0.7.0-alpha.0#rust-hot-patching)  
 Please report all hotpatch-related problems to them :)
 
+> ⚠️ *Should* work on Windows *somehow*, but I haven't yet figured out how! Let me know if you made it!
+
+
 ## First Time Installation
 
 First, we'll install [cargo-binstall](https://github.com/cargo-bins/cargo-binstall). It's not strictly required, but it will make the setup much quicker.
@@ -71,7 +74,12 @@ Click your OS below on instructions for how to do this
 Windows
 </summary>
 
-Sorry friend, I didn't test this. I *think* it runs out of the box on Windows.
+Sorry friend, I didn't test this. All I know is that you can install `rust-lld.exe` by running
+
+```sh
+cargo binstall cargo-binutils
+rustup component add llvm-tools-preview
+```
 
 </details>
 
