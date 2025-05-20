@@ -52,9 +52,9 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
             use bevy::ecs::system::SystemState;
             let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
             let (#(#param_idents),*) = __system_state.get(world);
-            let _result = #original_wrapper_fn(#(#param_idents),*);
+            let __result = #original_wrapper_fn(#(#param_idents),*);
             __system_state.apply(world);
-            _result
+            __result
         }
 
         // Original function body moved into a standalone fn
