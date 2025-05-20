@@ -13,6 +13,11 @@ Please report all hotpatch-related problems to them :)
 > ⚠️ *Should* work on Windows *somehow*, but I haven't yet figured out how! Let me know if you made it!
 
 
+
+https://github.com/user-attachments/assets/a44e446b-b2bb-4e10-81c3-3f20cccadea0
+
+
+
 ## First Time Installation
 
 First, we'll install [cargo-binstall](https://github.com/cargo-bins/cargo-binstall). It's not strictly required, but it will make the setup much quicker.
