@@ -212,8 +212,9 @@ dx serve --hot-patch --example ui
 
 - Cannot [combine mold as your Rust linker with a global target dir](https://github.com/DioxusLabs/dioxus/issues/4149)
 - Using this [breaks dynamic linking](https://github.com/DioxusLabs/dioxus/issues/4154)
-- Systems cannot change their parameters at runtime
-- Components queried in hotreloaded systems cannot change their definition at runtime
+- A change in the definition of structs that appear in hot-patched systems at runtime will result in your query failing to match, as that new type does not exist in `World` yet.
+  - Practically speaking, this means you should not change the definition of `Resource`s and `Component`s of your system at runtime
+- All hotpatched systems run as exclusive systems, meaning they won't run in parallel
 - Attaching a debugger is problaby not going to work. Let me know if you try!
 - I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Probably. Let me know!
 

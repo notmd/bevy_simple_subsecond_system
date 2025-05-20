@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{ItemFn, Pat, PatIdent, parse_macro_input};
+use syn::{FnArg, ItemFn, Pat, PatIdent, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -8,62 +8,71 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let vis = &input_fn.vis;
     let sig = &input_fn.sig;
+    let original_output = &sig.output;
+    let original_fn_name = &sig.ident;
     let block = &input_fn.block;
-    let fn_name = &sig.ident;
-
-    let hotpatched_name = format_ident!("{}_hotpatched", fn_name);
+    let inputs = &sig.inputs;
     let generics = &sig.generics;
-    let output = &sig.output;
     let where_clause = &sig.generics.where_clause;
 
-    // Construct two sets of arguments:
-    // - `clean_inputs`: used for outer function (without `mut`)
-    // - `arg_idents`: the list of argument names for .call((...))
-    let mut clean_inputs = Vec::new();
-    let mut arg_idents = Vec::new();
+    // Generate new identifiers
+    let hotpatched_fn = format_ident!("{}_hotpatched", original_fn_name);
+    let original_wrapper_fn = format_ident!("{}_original", original_fn_name);
 
-    for input in &sig.inputs {
+    // Capture parameter types and names
+    let mut param_types = Vec::new();
+    let mut param_idents = Vec::new();
+
+    for input in inputs {
         match input {
-            syn::FnArg::Typed(pat_type) => {
-                // Assume pattern is an identifier (no destructuring)
+            FnArg::Typed(pat_type) => {
+                param_types.push(&pat_type.ty);
                 if let Pat::Ident(PatIdent { ident, .. }) = &*pat_type.pat {
-                    arg_idents.push(quote! { #ident });
-
-                    let ty = &pat_type.ty;
-                    let attrs = &pat_type.attrs;
-
-                    // Rebuild argument without `mut`
-                    clean_inputs.push(quote! {
-                        #(#attrs)* #ident: #ty
-                    });
+                    param_idents.push(ident);
                 } else {
-                    panic!("`#[hot]` only supports identifier patterns (no destructuring)");
+                    panic!("`#[hot]` only supports simple identifiers in parameter patterns.");
                 }
             }
-            syn::FnArg::Receiver(_) => {
-                panic!("`#[hot]` does not support methods (`self` parameter)");
+            FnArg::Receiver(_) => {
+                panic!("`#[hot]` does not support `self` methods.");
             }
         }
     }
 
-    // Rebuild the outer signature (stripped of `mut`)
-    let outer_fn = quote! {
-        #vis fn #fn_name #generics(#(#clean_inputs),*) #output #where_clause {
-            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_name).call((#(#arg_idents),*))
+    // Generate code
+    let result = quote! {
+        // Outer entry point: stable ABI, hot-reload safe
+        #vis fn #original_fn_name(world: &mut bevy::ecs::world::World) #original_output {
+            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
+                .call((world,))
+        }
+
+        // Hotpatched version with stable signature
+        #vis fn #hotpatched_fn(world: &mut bevy::ecs::world::World) #original_output {
+            use bevy::ecs::system::SystemState;
+            let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
+            let __unsafe_world = world.as_unsafe_world_cell_readonly();
+
+            let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
+            match __validation {
+                Ok(()) => (),
+                Err(e) => {
+                    if e.skipped {
+                        return;
+                    }
+                }
+            }
+            let (#(#param_idents),*) = __system_state.get(world);
+            let __result = #original_wrapper_fn(#(#param_idents),*);
+            __system_state.apply(world);
+            __result
+        }
+
+        // Original function body moved into a standalone fn
+        #vis fn #original_wrapper_fn #generics(#inputs) #where_clause {
+            #block
         }
     };
 
-    // The original hotpatched function
-    let inputs = &sig.inputs;
-
-    let hotpatched_fn = quote! {
-        #vis fn #hotpatched_name #generics(#inputs) #output #where_clause
-            #block
-    };
-
-    quote! {
-        #outer_fn
-        #hotpatched_fn
-    }
-    .into()
+    result.into()
 }
