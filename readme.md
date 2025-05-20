@@ -14,7 +14,7 @@ Please report all hotpatch-related problems to them :)
 
 
 
-https://github.com/user-attachments/assets/a44e446b-b2bb-4e10-81c3-3f20cccadea0
+<https://github.com/user-attachments/assets/a44e446b-b2bb-4e10-81c3-3f20cccadea0>
 
 
 
