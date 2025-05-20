@@ -19,16 +19,21 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let hotpatched_fn = format_ident!("{}_hotpatched", original_fn_name);
     let original_wrapper_fn = format_ident!("{}_original", original_fn_name);
 
-    // Capture parameter types and names
+    // Capture parameter types, names, and mutability
     let mut param_types = Vec::new();
     let mut param_idents = Vec::new();
+    let mut param_mutability = Vec::new();
 
     for input in inputs {
         match input {
             FnArg::Typed(pat_type) => {
                 param_types.push(&pat_type.ty);
-                if let Pat::Ident(PatIdent { ident, .. }) = &*pat_type.pat {
+                if let Pat::Ident(PatIdent {
+                    ident, mutability, ..
+                }) = &*pat_type.pat
+                {
                     param_idents.push(ident);
+                    param_mutability.push(mutability.is_some());
                 } else {
                     panic!("`#[hot]` only supports simple identifiers in parameter patterns.");
                 }
@@ -39,7 +44,18 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    // Generate code
+    // Generate correct destructuring pattern for parameters
+    let destructure = param_idents
+        .iter()
+        .zip(param_mutability.iter())
+        .map(|(ident, is_mut)| {
+            if *is_mut {
+                quote! { mut #ident }
+            } else {
+                quote! { #ident }
+            }
+        });
+
     let result = quote! {
         // Outer entry point: stable ABI, hot-reload safe
         #vis fn #original_fn_name(world: &mut bevy::ecs::world::World) #original_output {
@@ -62,7 +78,8 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     }
                 }
             }
-            let (#(#param_idents),*) = __system_state.get(world);
+
+            let (#(#destructure),*) = __system_state.get_mut(world);
             let __result = #original_wrapper_fn(#(#param_idents),*);
             __system_state.apply(world);
             __result
