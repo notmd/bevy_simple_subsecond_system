@@ -51,6 +51,17 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #vis fn #hotpatched_fn(world: &mut bevy::ecs::world::World) #original_output {
             use bevy::ecs::system::SystemState;
             let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
+            let __unsafe_world = world.as_unsafe_world_cell_readonly();
+
+            let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
+            match __validation {
+                Ok(()) => (),
+                Err(e) => {
+                    if e.skipped {
+                        return;
+                    }
+                }
+            }
             let (#(#param_idents),*) = __system_state.get(world);
             let __result = #original_wrapper_fn(#(#param_idents),*);
             __system_state.apply(world);
