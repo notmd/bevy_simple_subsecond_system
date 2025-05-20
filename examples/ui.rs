@@ -12,6 +12,7 @@ fn main() {
 #[derive(Component)]
 #[require(Node)]
 struct Ui;
+
 fn setup(mut commands: Commands) {
     commands.spawn(Ui);
     commands.spawn(Camera2d);
