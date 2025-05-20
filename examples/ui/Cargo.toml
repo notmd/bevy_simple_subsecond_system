@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 bevy_simple_subsecond_system = { path = "../../" }
-bevy = { version = "0.16", features = ["bevy_ui_debug"] }
+bevy = "0.16"

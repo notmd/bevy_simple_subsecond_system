@@ -49,7 +49,7 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Rebuild the outer signature (stripped of `mut`)
     let outer_fn = quote! {
         #vis fn #fn_name #generics(#(#clean_inputs),*) #output #where_clause {
-            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_name).call((#(#arg_idents),*));
+            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_name).call((#(#arg_idents),*))
         }
     };
 

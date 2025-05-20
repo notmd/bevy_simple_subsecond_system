@@ -4,11 +4,6 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
-        .insert_resource(UiDebugOptions {
-            // Enable UI debug overlay for better visualization
-            enabled: true,
-            ..default()
-        })
         .add_systems(Startup, setup)
         .add_systems(Update, configure_ui)
         .run();
