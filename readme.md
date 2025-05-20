@@ -185,12 +185,12 @@ fn greet() {
 
 Run the examples with
 ```sh
-dx serve --hot-patch --package name_of_the_example
+dx serve --hot-patch --example name_of_the_example
 ```
 
 e.g.
 ```sh
-dx serve --hot-patch --package ui
+dx serve --hot-patch --example ui
 ```
 
 ## Known Limitations
