@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
-    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, Token, Type, TypeReference,
+    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath, TypeReference,
     parse::{Parse, ParseStream},
     parse_macro_input,
 };
@@ -112,9 +112,18 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
             bevy::prelude::info!("Hot-patched system {name}");
         }
     };
-    let world_param = has_single_world_param(sig);
 
-    let hotpatched_fn_definition = match world_param {
+    let early_return = if is_result_unit(original_output) {
+        quote! {
+            return Ok(());
+        }
+    } else {
+        quote! {
+            return;
+        }
+    };
+
+    let hotpatched_fn_definition = match has_single_world_param(sig) {
         WorldParam::Mut | WorldParam::Ref => quote! {
             #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
                 #original_wrapper_fn(world)
@@ -132,7 +141,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                     Ok(()) => (),
                     Err(e) => {
                         if e.skipped {
-                            return;
+                            #early_return
                         }
                     }
                 }
@@ -166,7 +175,8 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                     if !needs_update {
                         return;
                     }
-                    #maybe_run_call
+                    // TODO: we simply ignore the `Result` here, but we should be propagating it
+                    #maybe_run_call;
                 });
                 let system = bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     system_ptr_update_id,
@@ -236,5 +246,44 @@ fn has_single_world_param(sig: &syn::Signature) -> WorldParam {
             }
         }
         _ => WorldParam::None,
+    }
+}
+
+fn is_result_unit(output: &ReturnType) -> bool {
+    match output {
+        ReturnType::Default => false, // no return type, i.e., returns ()
+        ReturnType::Type(_, ty) => match &**ty {
+            Type::Path(TypePath { path, .. }) => {
+                // Match on the outer type
+                let Some(seg) = path.segments.last() else {
+                    return false;
+                };
+                if seg.ident != "Result" {
+                    return false;
+                }
+
+                // Match on the generic args: Result<(), BevyError>
+                match seg.arguments {
+                    syn::PathArguments::AngleBracketed(ref generics) => {
+                        let args = &generics.args;
+
+                        let Some(first) = args.first() else {
+                            // Not sure this case can even happen
+                            return true;
+                        };
+
+                        // Check first generic arg is ()
+                        matches!(
+                            first,
+                            syn::GenericArgument::Type(Type::Tuple(t)) if t.elems.is_empty()
+                        )
+                    }
+                    syn::PathArguments::Parenthesized(_) => false,
+                    // TODO: This could also be a result that has a non-unit Ok variant
+                    syn::PathArguments::None => true,
+                }
+            }
+            _ => false,
+        },
     }
 }

@@ -35,6 +35,7 @@ fn add_to_app() {
             ),
             (
                 system_with_return_value,
+                system_with_aliased_return,
                 system_with_generic::<Transform>,
                 save_to_previous::<Transform>,
                 apply_config::<DevConfig>,
@@ -118,8 +119,13 @@ fn system_with_mut_resource_and_mut_single_query_rerun_false(
 ) {
 }
 
-//#[hot]
+#[hot]
 fn system_with_return_value() -> Result<(), BevyError> {
+    Ok(())
+}
+
+#[hot]
+fn system_with_aliased_return() -> Result {
     Ok(())
 }
 
