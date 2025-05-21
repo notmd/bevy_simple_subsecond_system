@@ -12,7 +12,7 @@ fn main() {
         .run();
 }
 
-#[hot]
+#[hot(rerun_on_hot_patch = true)]
 fn setup(mut commands: Commands) {
     commands.spawn((
         DespawnOnHotPatched,
@@ -30,7 +30,7 @@ fn setup(mut commands: Commands) {
         },
         children![
             Text::new("Hello, world!"),
-            Text::new("Try adding new texts below"),
+            Text::new("Try adding new texashtts below"),
         ],
     ));
     commands.spawn((DespawnOnHotPatched, Camera2d));
