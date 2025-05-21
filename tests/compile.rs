@@ -1,5 +1,12 @@
 #![allow(unused_mut, unused_variables)]
-use bevy::prelude::*;
+use bevy::{
+    ecs::{
+        event::EventCursor,
+        schedule::ScheduleConfigs,
+        system::{ScheduleSystem, SystemParam},
+    },
+    prelude::*,
+};
 use bevy_simple_subsecond_system::prelude::*;
 
 #[test]
@@ -105,3 +112,53 @@ fn system_with_return_value() -> Result<(), BevyError> {
     Ok(())
 }
  */
+
+trait Config: Asset {}
+
+#[hot]
+fn apply_config<C: Config>(world: &mut World, mut cursor: Local<EventCursor<AssetEvent<C>>>) {}
+
+#[derive(Component)]
+struct Previous<T: Component + Clone>(T);
+
+#[hot]
+fn save_to_previous<C: Component + Clone>(
+    mut previous_query: Query<(&mut Previous<C>, &C), Changed<C>>,
+) {
+}
+
+#[hot]
+fn debug_start(world: &mut World) {}
+
+pub trait State: Resource + Sized {}
+#[derive(SystemParam)]
+pub struct CurrentRef<'w, S: State>(Option<Res<'w, S>>);
+
+#[derive(States, Debug, Hash, PartialEq, Eq, Clone, Resource)]
+pub enum Screen {}
+impl State for Screen {}
+
+#[derive(SystemParam)]
+pub struct ConfigRef<'w, C: Config> {
+    assets: Res<'w, Assets<C>>,
+}
+#[derive(Asset, Reflect)]
+struct DevConfig {
+    pub progress: f32,
+}
+impl Config for DevConfig {}
+
+pub struct Progress {
+    pub done: u32,
+    pub total: u32,
+}
+
+#[hot]
+fn force_loading_screen(config: ConfigRef<DevConfig>, screen: CurrentRef<Screen>) -> Progress {
+    todo!()
+}
+
+#[hot]
+fn wait_in_screen(duration: f32) -> ScheduleConfigs<ScheduleSystem> {
+    todo!()
+}
