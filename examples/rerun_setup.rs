@@ -8,10 +8,19 @@ fn main() {
         .run();
 }
 
+#[derive(Component)]
+struct Setup;
+
 #[hot(rerun_on_hot_patch = true)]
-fn setup(mut commands: Commands) {
+fn setup(previous_setup: Query<Entity, With<Setup>>, mut commands: Commands) {
+    // Clear all entities that were spawned on `Startup` so that
+    // hot-patching does not spawn them again
+    for entity in previous_setup.iter() {
+        commands.entity(entity).despawn();
+    }
+
     commands.spawn((
-        DespawnOnHotPatched,
+        Setup,
         Node {
             // You can change the `Node` however you want at runtime
             position_type: PositionType::Absolute,
@@ -29,7 +38,7 @@ fn setup(mut commands: Commands) {
             Text::new("Try adding new texts below"),
         ],
     ));
-    commands.spawn((DespawnOnHotPatched, Camera2d));
+    commands.spawn((Setup, Camera2d));
 
     commands.insert_resource(UiDebugOptions {
         // Set this to `true` to see the UI debug overlay. Try changing it at runtime!
