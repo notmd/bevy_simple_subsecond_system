@@ -67,19 +67,30 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     #hotpatched_fn,
                 );
                 let hot_fn_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
+                let system_ptr_update_id = world.register_system(move |world: &mut bevy::ecs::world::World| {
+                    let needs_update = {
+                        let mut hot_patched_systems = world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
+                        let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
+                        hot_patched_system.current_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
+                        let needs_update = hot_patched_system.current_ptr != hot_patched_system.last_ptr;
+                        hot_patched_system.last_ptr = hot_patched_system.current_ptr;
+                        needs_update
+                    };
+                    if !needs_update {
+                        return;
+                    }
+                    let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name).name();
+                    bevy::prelude::info!("Hot-patched system {name}");
+                    bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
+                        .call((world,))
+                });
                 let system = bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
-                    id: system_id,
+                    system_ptr_update_id,
                     current_ptr: hot_fn_ptr,
                     last_ptr: hot_fn_ptr,
-                    name: bevy::ecs::system::IntoSystem::into_system(#original_fn_name).name(),
                 };
                 world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.insert(type_id, system);
             }
-            let current_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
-            let mut hot_patched_systems = world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
-            let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
-            hot_patched_system.last_ptr = hot_patched_system.current_ptr;
-            hot_patched_system.current_ptr = current_ptr;
 
             bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
                 .call((world,))
@@ -93,20 +104,6 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
 
-            trait ReturnValue {
-                fn return_value() -> Self;
-            }
-
-            impl ReturnValue for () {
-                fn return_value() -> Self {
-                    ()
-                }
-            }
-            impl ReturnValue for bevy::ecs::error::Result {
-                fn return_value() -> Self {
-                    bevy::ecs::error::Result::Ok(())
-                }
-            }
             match __validation {
                 Ok(()) => (),
                 Err(e) => {
@@ -119,6 +116,7 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
             let (#(#destructure),*) = __system_state.get_mut(world);
             let __result = #original_wrapper_fn(#(#param_idents),*);
             __system_state.apply(world);
+            #[allow(unused_unit)]
             __result
         }
 
