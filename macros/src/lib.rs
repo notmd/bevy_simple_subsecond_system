@@ -80,7 +80,7 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
                         return;
                     }
                     let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name).name();
-                    bevy::prelude::info!("Hot-patched system {name}");
+                    bevy::prelude::info!("Hot-patched system {name}, executing it now.");
                     bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
                         .call((world,))
                 });
