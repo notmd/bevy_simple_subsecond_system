@@ -112,7 +112,6 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
             let type_id = #hotpatched_fn.type_id();
             let contains_system = world.get_resource::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
             if !contains_system {
-                let system_id = world.register_system(#hotpatched_fn);
                 let hot_fn_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
                 let system_ptr_update_id = world.register_system(move |world: &mut bevy::ecs::world::World| {
                     let needs_update = {
