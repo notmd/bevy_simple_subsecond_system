@@ -3,10 +3,6 @@ use bevy_simple_subsecond_system::prelude::*;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(UiDebugOptions {
-            enabled: true,
-            ..default()
-        })
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_systems(Startup, setup)
         .run();
@@ -30,8 +26,14 @@ fn setup(mut commands: Commands) {
         },
         children![
             Text::new("Hello, world!"),
-            Text::new("Try adding new texashtts below"),
+            Text::new("Try adding new texts below"),
         ],
     ));
     commands.spawn((DespawnOnHotPatched, Camera2d));
+
+    commands.insert_resource(UiDebugOptions {
+        // Set this to `true` to see the UI debug overlay. Try changing it at runtime!
+        enabled: false,
+        ..default()
+    });
 }
