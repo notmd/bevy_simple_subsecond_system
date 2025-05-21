@@ -1,7 +1,8 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
-    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath, TypeReference,
+    DeriveInput, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath,
+    TypeReference,
     parse::{Parse, ParseStream},
     parse_macro_input,
 };
@@ -286,4 +287,20 @@ fn is_result_unit(output: &ReturnType) -> bool {
             _ => false,
         },
     }
+}
+
+#[proc_macro_derive(HotPatchMigrate)]
+pub fn derive_hot_patch_migrate(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        impl bevy_simple_subsecond_system::migration::HotPatchMigrate for #name {
+            fn current_type_id() -> std::any::TypeId {
+                bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(|| std::any::TypeId::of::<Self>()).call(())
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
 }

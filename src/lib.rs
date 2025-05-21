@@ -2,6 +2,8 @@
 #![allow(clippy::type_complexity)]
 #![doc = include_str!("../readme.md")]
 
+pub mod migration;
+
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
 use bevy::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
@@ -11,6 +13,7 @@ use dioxus_devtools::{subsecond::apply_patch, *};
 /// Everything you need to use hotpatching
 pub mod prelude {
     pub use super::{HotPatched, SimpleSubsecondPlugin};
+    pub use crate::migration::*;
     pub use bevy_simple_subsecond_system_macros::*;
 }
 
@@ -45,16 +48,18 @@ impl Plugin for SimpleSubsecondPlugin {
         });
 
         app.init_resource::<HotPatchedSystems>();
+        app.init_resource::<migration::ComponentMigrations>();
 
         app.add_event::<HotPatched>().add_systems(
             PreUpdate,
             (
-                move |mut events: EventWriter<HotPatched>| {
+                update_system_ptr,
+                move |mut events: EventWriter<HotPatched>, mut commands: Commands| {
                     if receiver.try_recv().is_ok() {
                         events.write_default();
+                        commands.run_system_cached(migration::migrate);
                     }
                 },
-                update_system_ptr,
             )
                 .chain(),
         );
