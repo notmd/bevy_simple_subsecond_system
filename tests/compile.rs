@@ -159,7 +159,7 @@ fn force_loading_screen(config: ConfigRef<DevConfig>, screen: CurrentRef<Screen>
 
 //#[hot]
 fn wait_in_screen(duration: f32) -> ScheduleConfigs<ScheduleSystem> {
-    todo!()
+    (move |screen_time: Res<Time>| ()).into_configs()
 }
 
 fn ignore_progress(_: In<Progress>) {}
