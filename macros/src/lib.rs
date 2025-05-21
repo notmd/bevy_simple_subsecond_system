@@ -213,20 +213,17 @@ fn has_single_world_param(sig: &syn::Signature) -> WorldParam {
         Type::Reference(TypeReference {
             mutability, elem, ..
         }) => {
-            // Check type path is bevy::ecs::world::World
             match &**elem {
                 Type::Path(type_path) => {
                     let segments = &type_path.path.segments;
-                    let expected_path = ["bevy_ecs", "world", "World"];
 
-                    if segments.len() != expected_path.len() {
-                        //return WorldParam::None;
-                    }
+                    let Some(last_segment) = segments.last().cloned() else {
+                        return WorldParam::None;
+                    };
 
-                    for (seg, expected) in segments.iter().zip(expected_path) {
-                        if seg.ident != expected {
-                            //return WorldParam::None;
-                        }
+                    // TODO: Make this more robust :D
+                    if last_segment.ident != "World" {
+                        return WorldParam::None;
                     }
 
                     if mutability.is_some() {
