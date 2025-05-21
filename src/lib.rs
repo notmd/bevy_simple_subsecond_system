@@ -2,7 +2,9 @@
 #![allow(clippy::type_complexity)]
 #![doc = include_str!("../readme.md")]
 
-use bevy::prelude::*;
+use __macros_internal::__HotPatchedSystem as HotPatchedSystem;
+use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
+use bevy::{ecs::system::SystemId, platform::collections::HashMap, prelude::*};
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 use dioxus_devtools::{subsecond::apply_patch, *};
@@ -42,6 +44,8 @@ impl Plugin for SimpleSubsecondPlugin {
                 }
             }
         });
+
+        app.init_resource::<HotPatchedSystems>();
 
         app.add_event::<HotPatched>().add_systems(
             Last,
@@ -106,3 +110,19 @@ pub struct HotPatched;
 /// ```
 #[derive(Component, Default)]
 pub struct DespawnOnHotPatched;
+
+#[doc(hidden)]
+pub mod __macros_internal {
+    use std::any::TypeId;
+
+    use bevy::{ecs::system::SystemId, platform::collections::HashMap, prelude::*};
+
+    #[derive(Resource, Default)]
+    pub struct __HotPatchedSystems(pub HashMap<TypeId, __HotPatchedSystem>);
+
+    #[doc(hidden)]
+    pub struct __HotPatchedSystem {
+        pub id: SystemId,
+        pub current_ptr: u32,
+    }
+}
