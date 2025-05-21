@@ -205,7 +205,7 @@ dx serve --hot-patch --example name_of_the_example
 
 e.g.
 ```sh
-dx serve --hot-patch --example ui
+dx serve --hot-patch --example patch_on_update
 ```
 
 ## Known Limitations
@@ -218,6 +218,7 @@ dx serve --hot-patch --example ui
 - Only [the topmost binary is hotpatched](https://github.com/DioxusLabs/dioxus/issues/4160), meaning your app is not allowed to have a `lib.rs` or a workspace setup.
 - Attaching a debugger is problaby not going to work. Let me know if you try!
 - I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Probably. Let me know!
+- Return values like `-> bevy::prelude::Result` are currently unsupported. That is not a technical limitation, but I couldn't make the macro happy.
 
 ## Compatibility
 

@@ -55,3 +55,24 @@ fn system_with_mut_resource_and_mut_single_query(
     mut query: Single<&mut Transform, With<Transform>>,
 ) {
 }
+
+#[hot(rerun_on_hot_patch = true)]
+fn system_with_mut_resource_and_mut_single_query_rerun_true(
+    mut resource: ResMut<Time>,
+    mut query: Single<&mut Transform, With<Transform>>,
+) {
+}
+
+#[hot(rerun_on_hot_patch = false)]
+fn system_with_mut_resource_and_mut_single_query_rerun_false(
+    mut resource: ResMut<Time>,
+    mut query: Single<&mut Transform, With<Transform>>,
+) {
+}
+
+/*
+#[hot]
+fn system_with_return_value() -> Result<(), BevyError> {
+    Ok(())
+}
+ */

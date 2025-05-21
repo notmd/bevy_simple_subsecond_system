@@ -1,11 +1,46 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{FnArg, ItemFn, Pat, PatIdent, parse_macro_input};
+use syn::{
+    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, Token,
+    parse::{Parse, ParseStream},
+    parse_macro_input,
+};
+
+struct HotArgs {
+    rerun_on_hot_patch: Option<bool>,
+}
+
+impl Parse for HotArgs {
+    fn parse(input: ParseStream) -> std::result::Result<HotArgs, syn::Error> {
+        let mut rerun_on_hot_patch = None;
+
+        while !input.is_empty() {
+            let ident: Ident = input.parse()?;
+            input.parse::<Token![=]>()?;
+
+            if ident == "rerun_on_hot_patch" {
+                let value: LitBool = input.parse()?;
+                rerun_on_hot_patch = Some(value.value);
+            } else {
+                return Err(syn::Error::new_spanned(ident, "Unknown attribute key"));
+            }
+
+            if input.peek(Token![,]) {
+                input.parse::<Token![,]>()?;
+            }
+        }
+
+        Ok(HotArgs { rerun_on_hot_patch })
+    }
+}
 
 #[proc_macro_attribute]
-pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let input_fn = parse_macro_input!(item as ItemFn);
+pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the attribute as a Meta
+    let args = parse_macro_input!(attr as HotArgs);
+    let rerun_on_hot_patch = args.rerun_on_hot_patch.unwrap_or(false);
 
+    let input_fn = parse_macro_input!(item as ItemFn);
     let vis = &input_fn.vis;
     let sig = &input_fn.sig;
     let original_output = &sig.output;
@@ -16,8 +51,8 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let where_clause = &sig.generics.where_clause;
 
     // Generate new identifiers
-    let hotpatched_fn = format_ident!("{}_hotpatched", original_fn_name);
-    let original_wrapper_fn = format_ident!("{}_original", original_fn_name);
+    let hotpatched_fn = format_ident!("__{}_hotpatched", original_fn_name);
+    let original_wrapper_fn = format_ident!("__{}_original", original_fn_name);
 
     // Capture parameter types, names, and mutability
     let mut param_types = Vec::new();
@@ -56,9 +91,50 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         });
 
+    let maybe_run_call = if rerun_on_hot_patch {
+        quote! {
+            let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name).name();
+            bevy::prelude::info!("Hot-patched system {name}, executing it now.");
+            bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
+                .call((world,))
+        }
+    } else {
+        quote! {
+            let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name).name();
+            bevy::prelude::info!("Hot-patched system {name}");
+        }
+    };
+
     let result = quote! {
         // Outer entry point: stable ABI, hot-reload safe
         #vis fn #original_fn_name(world: &mut bevy::ecs::world::World) #original_output {
+            use std::any::Any as _;
+            let type_id = #hotpatched_fn.type_id();
+            let contains_system = world.get_resource::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
+            if !contains_system {
+                let hot_fn_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
+                let system_ptr_update_id = world.register_system(move |world: &mut bevy::ecs::world::World| {
+                    let needs_update = {
+                        let mut hot_patched_systems = world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
+                        let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
+                        hot_patched_system.current_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
+                        let needs_update = hot_patched_system.current_ptr != hot_patched_system.last_ptr;
+                        hot_patched_system.last_ptr = hot_patched_system.current_ptr;
+                        needs_update
+                    };
+                    if !needs_update {
+                        return;
+                    }
+                    #maybe_run_call
+                });
+                let system = bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
+                    system_ptr_update_id,
+                    current_ptr: hot_fn_ptr,
+                    last_ptr: hot_fn_ptr,
+                };
+                world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.insert(type_id, system);
+            }
+
             bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
                 .call((world,))
         }
@@ -70,6 +146,7 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
             let __unsafe_world = world.as_unsafe_world_cell_readonly();
 
             let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
+
             match __validation {
                 Ok(()) => (),
                 Err(e) => {
@@ -82,11 +159,12 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
             let (#(#destructure),*) = __system_state.get_mut(world);
             let __result = #original_wrapper_fn(#(#param_idents),*);
             __system_state.apply(world);
+            #[allow(unused_unit)]
             __result
         }
 
         // Original function body moved into a standalone fn
-        #vis fn #original_wrapper_fn #generics(#inputs) #where_clause {
+        #vis fn #original_wrapper_fn #generics(#inputs) #where_clause #original_output {
             #block
         }
     };
