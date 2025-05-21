@@ -10,7 +10,7 @@ use dioxus_devtools::{subsecond::apply_patch, *};
 
 /// Everything you need to use hotpatching
 pub mod prelude {
-    pub use super::{DespawnOnHotPatched, HotPatched, SimpleSubsecondPlugin};
+    pub use super::{HotPatched, SimpleSubsecondPlugin};
     pub use bevy_simple_subsecond_system_macros::*;
 }
 
@@ -49,15 +49,9 @@ impl Plugin for SimpleSubsecondPlugin {
         app.add_event::<HotPatched>().add_systems(
             PreUpdate,
             (
-                move |mut events: EventWriter<HotPatched>,
-                      to_despawn: Query<Entity, With<DespawnOnHotPatched>>,
-                      mut commands: Commands| {
+                move |mut events: EventWriter<HotPatched>| {
                     if receiver.try_recv().is_ok() {
                         events.write_default();
-                        for entity in to_despawn.iter() {
-                            info!("Despawning entity {:?}", entity);
-                            commands.entity(entity).despawn();
-                        }
                     }
                 },
                 update_system_ptr,
@@ -70,30 +64,6 @@ impl Plugin for SimpleSubsecondPlugin {
 /// Event sent when the hotpatch is applied.
 #[derive(Event, Default)]
 pub struct HotPatched;
-
-/// Attach this component to an entity to make it despawn whenever a hotpatch is applied.
-/// Useful in combination with `#[hot(rerun_on_hot_patch = true)]` to rerun setup systems without spawning duplicates.
-///
-/// # Example
-/// ```ignore
-/// # use bevy::prelude::*;
-/// # use bevy_simple_subsecond_system::prelude::*;
-/// # let mut app = App::new();
-///
-/// app.add_systems(Startup, setup_ui);
-///
-/// #[hot(rerun_on_hot_patch = true)]
-/// fn setup_ui(mut commands: Commands) {
-///    commands.spawn((
-///        // Use this component to now spawn a new UI every time the hotpatch is applied.
-///        DespawnOnHotPatched,
-///        Text::new("Hello, world!"),
-///    ));
-///    commands.spawn((DespawnOnHotPatched, Camera2d));
-/// }
-/// ```
-#[derive(Component, Default)]
-pub struct DespawnOnHotPatched;
 
 fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: Commands) {
     for system in hot_patched_systems.0.values() {

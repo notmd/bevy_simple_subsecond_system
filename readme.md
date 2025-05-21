@@ -217,8 +217,10 @@ dx serve --hot-patch --example patch_on_update
 - All hotpatched systems run as exclusive systems, meaning they won't run in parallel
 - Only [the topmost binary is hotpatched](https://github.com/DioxusLabs/dioxus/issues/4160), meaning your app is not allowed to have a `lib.rs` or a workspace setup.
 - Attaching a debugger is problaby not going to work. Let me know if you try!
-- I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Probably. Let me know!
-- Return values like `-> bevy::prelude::Result` are currently unsupported. That is not a technical limitation, but I couldn't make the macro happy.
+- I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Maybe. Let me know!
+- Some signatures are not supported, see the tests. Some have `#[hot]` commented out to indicate this
+- Only functions that exist when the app is launched are considered while hotpatching. This means that if you have a system `A` that calls a function `B`, 
+  changing `B` will only work at runtime if that function existed already when the app was launched.
 
 ## Compatibility
 

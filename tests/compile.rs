@@ -1,5 +1,12 @@
 #![allow(unused_mut, unused_variables)]
-use bevy::prelude::*;
+use bevy::{
+    ecs::{
+        event::EventCursor,
+        schedule::ScheduleConfigs,
+        system::{ScheduleSystem, SystemParam},
+    },
+    prelude::*,
+};
 use bevy_simple_subsecond_system::prelude::*;
 
 #[test]
@@ -7,23 +14,36 @@ fn add_to_app() {
     App::new().add_systems(
         Update,
         (
-            empty_system,
-            system_with_commands,
-            system_with_commands_mut,
-            system_with_zst_query,
-            system_with_readonly_query,
-            system_with_mut_query,
-            system_with_mixed_query,
-            system_with_single_query,
-            system_with_resource,
-            system_with_resource_and_query,
-            system_with_mut_resource,
-            system_with_mut_resource_and_query,
-            system_with_mut_resource_and_mut_query,
-            system_with_mut_resource_and_single_query,
-            system_with_mut_resource_and_mut_single_query,
-            system_with_mut_resource_and_mut_single_query_rerun_true,
-            system_with_mut_resource_and_mut_single_query_rerun_false,
+            (
+                empty_system,
+                system_with_commands,
+                system_with_commands_mut,
+                system_with_zst_query,
+                system_with_readonly_query,
+                system_with_mut_query,
+                system_with_mixed_query,
+                system_with_single_query,
+                system_with_resource,
+                system_with_resource_and_query,
+                system_with_mut_resource,
+                system_with_mut_resource_and_query,
+                system_with_mut_resource_and_mut_query,
+                system_with_mut_resource_and_single_query,
+                system_with_mut_resource_and_mut_single_query,
+                system_with_mut_resource_and_mut_single_query_rerun_true,
+                system_with_mut_resource_and_mut_single_query_rerun_false,
+            ),
+            (
+                system_with_return_value,
+                system_with_aliased_return,
+                system_with_generic::<Transform>,
+                save_to_previous::<Transform>,
+                apply_config::<DevConfig>,
+                exclusive_mut,
+                exclusive,
+                force_loading_screen.pipe(ignore_progress),
+                wait_in_screen(1.0),
+            ),
         ),
     );
 }
@@ -99,9 +119,71 @@ fn system_with_mut_resource_and_mut_single_query_rerun_false(
 ) {
 }
 
-/*
 #[hot]
 fn system_with_return_value() -> Result<(), BevyError> {
     Ok(())
 }
- */
+
+#[hot]
+fn system_with_aliased_return() -> Result {
+    Ok(())
+}
+
+trait Comp: Component {}
+impl<T: Component> Comp for T {}
+#[hot]
+fn system_with_generic<T: Comp>(query: Query<&T>) {}
+
+#[derive(Component)]
+struct Previous<T: Component + Clone>(T);
+
+#[hot]
+fn save_to_previous<C: Component + Clone>(
+    mut previous_query: Query<(&mut Previous<C>, &C), Changed<C>>,
+) {
+}
+
+//#[hot]
+fn apply_config<C: Config>(world: &mut World, mut cursor: Local<EventCursor<AssetEvent<C>>>) {}
+
+#[hot]
+fn exclusive_mut(world: &mut World) {}
+
+#[hot]
+fn exclusive(world: &World) {}
+
+//#[hot]
+fn force_loading_screen(config: ConfigRef<DevConfig>, screen: CurrentRef<Screen>) -> Progress {
+    todo!()
+}
+
+//#[hot]
+fn wait_in_screen(duration: f32) -> ScheduleConfigs<ScheduleSystem> {
+    (move |screen_time: Res<Time>| ()).into_configs()
+}
+
+fn ignore_progress(_: In<Progress>) {}
+
+pub trait Config: Asset {}
+pub trait State: Resource + Sized {}
+#[derive(SystemParam)]
+pub struct CurrentRef<'w, S: State>(pub Option<Res<'w, S>>);
+
+#[derive(States, Debug, Hash, PartialEq, Eq, Clone, Resource)]
+pub enum Screen {}
+impl State for Screen {}
+
+#[derive(SystemParam)]
+pub struct ConfigRef<'w, C: Config> {
+    pub assets: Res<'w, Assets<C>>,
+}
+#[derive(Asset, Reflect)]
+struct DevConfig {
+    pub progress: f32,
+}
+impl Config for DevConfig {}
+
+pub struct Progress {
+    pub done: u32,
+    pub total: u32,
+}
