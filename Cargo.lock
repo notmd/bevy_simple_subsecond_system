@@ -1059,6 +1059,7 @@ version = "0.1.2"
 dependencies = [
  "bevy",
  "bevy_simple_subsecond_system_macros",
+ "crossbeam-channel",
  "dioxus-devtools",
 ]
 

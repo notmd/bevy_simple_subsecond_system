@@ -18,9 +18,10 @@ categories = ["game-development"]
 bevy = { version = "0.16.0", default-features = false }
 dioxus-devtools = { version = "0.7.0-alpha.0" }
 bevy_simple_subsecond_system_macros = { path = "macros", version = "0.1.0" }
+crossbeam-channel = "0.5.15"
 
 [dev-dependencies]
-bevy = "0.16.0"
+bevy = { version = "0.16.0", features = ["bevy_ui_debug"] }
 
 [lints.clippy]
 # Bevy supplies arguments to systems via dependency injection, so it's natural for systems to
