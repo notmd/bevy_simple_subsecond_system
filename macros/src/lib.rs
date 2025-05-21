@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
-    Attribute, FnArg, Ident, ItemFn, Lit, LitBool, Meta, Pat, PatIdent, Token,
+    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, Token,
     parse::{Parse, ParseStream},
     parse_macro_input,
 };
@@ -51,8 +51,8 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let where_clause = &sig.generics.where_clause;
 
     // Generate new identifiers
-    let hotpatched_fn = format_ident!("{}_hotpatched", original_fn_name);
-    let original_wrapper_fn = format_ident!("{}_original", original_fn_name);
+    let hotpatched_fn = format_ident!("__{}_hotpatched", original_fn_name);
+    let original_wrapper_fn = format_ident!("__{}_original", original_fn_name);
 
     // Capture parameter types, names, and mutability
     let mut param_types = Vec::new();

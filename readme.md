@@ -205,7 +205,7 @@ dx serve --hot-patch --example name_of_the_example
 
 e.g.
 ```sh
-dx serve --hot-patch --example ui
+dx serve --hot-patch --example patch_on_update
 ```
 
 ## Known Limitations

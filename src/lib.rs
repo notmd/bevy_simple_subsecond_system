@@ -47,7 +47,7 @@ impl Plugin for SimpleSubsecondPlugin {
         app.init_resource::<HotPatchedSystems>();
 
         app.add_event::<HotPatched>().add_systems(
-            Last,
+            PreUpdate,
             (
                 move |mut events: EventWriter<HotPatched>,
                       to_despawn: Query<Entity, With<DespawnOnHotPatched>>,
@@ -67,32 +67,12 @@ impl Plugin for SimpleSubsecondPlugin {
     }
 }
 
-/// Event sent in [`Last`] when the hotpatch is applied.
-/// Useful to run systems that need to be run after the hotpatch is applied.
-///
-/// # Example
-/// ```ignore
-/// # use bevy::prelude::*;
-/// # use bevy_simple_subsecond_system::prelude::*;
-/// # let mut app = App::new();
-///
-/// app.add_systems(Startup, setup_ui);
-/// app.add_systems(Update, setup_ui.run_if(on_event::<HotPatched>));
-///
-/// [hot]
-/// fn setup_ui(mut commands: Commands) {
-///    commands.spawn((
-///        DespawnOnHotPatched,
-///        Text::new("Hello, world!"),
-///    ));
-///    commands.spawn((DespawnOnHotPatched, Camera2d));
-/// }
-/// ```
+/// Event sent when the hotpatch is applied.
 #[derive(Event, Default)]
 pub struct HotPatched;
 
 /// Attach this component to an entity to make it despawn whenever a hotpatch is applied.
-/// Useful for spawning things that need to be recreated after a hotpatch.
+/// Useful in combination with `#[hot(rerun_on_hot_patch = true)]` to rerun setup systems without spawning duplicates.
 ///
 /// # Example
 /// ```ignore
@@ -101,11 +81,11 @@ pub struct HotPatched;
 /// # let mut app = App::new();
 ///
 /// app.add_systems(Startup, setup_ui);
-/// app.add_systems(Update, setup_ui.run_if(on_event::<HotPatched>));
 ///
-/// [hot]
+/// #[hot(rerun_on_hot_patch = true)]
 /// fn setup_ui(mut commands: Commands) {
 ///    commands.spawn((
+///        // Use this component to now spawn a new UI every time the hotpatch is applied.
 ///        DespawnOnHotPatched,
 ///        Text::new("Hello, world!"),
 ///    ));
