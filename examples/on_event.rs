@@ -9,7 +9,6 @@ fn main() {
         })
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_systems(Startup, setup)
-        .add_systems(Update, setup.run_if(on_event::<HotPatched>))
         .run();
 }
 

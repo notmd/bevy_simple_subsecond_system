@@ -55,3 +55,10 @@ fn system_with_mut_resource_and_mut_single_query(
     mut query: Single<&mut Transform, With<Transform>>,
 ) {
 }
+
+/*
+#[hot]
+fn system_with_return_value() -> Result<(), BevyError> {
+    Ok(())
+}
+ */

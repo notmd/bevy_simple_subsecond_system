@@ -2,9 +2,8 @@
 #![allow(clippy::type_complexity)]
 #![doc = include_str!("../readme.md")]
 
-use __macros_internal::__HotPatchedSystem as HotPatchedSystem;
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy::{ecs::system::SystemId, platform::collections::HashMap, prelude::*};
+use bevy::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 use dioxus_devtools::{subsecond::apply_patch, *};
@@ -49,16 +48,21 @@ impl Plugin for SimpleSubsecondPlugin {
 
         app.add_event::<HotPatched>().add_systems(
             Last,
-            move |mut events: EventWriter<HotPatched>,
-                  to_despawn: Query<Entity, With<DespawnOnHotPatched>>,
-                  mut commands: Commands| {
-                if receiver.try_recv().is_ok() {
-                    events.write_default();
-                    for entity in to_despawn.iter() {
-                        commands.entity(entity).despawn();
+            (
+                move |mut events: EventWriter<HotPatched>,
+                      to_despawn: Query<Entity, With<DespawnOnHotPatched>>,
+                      mut commands: Commands| {
+                    if receiver.try_recv().is_ok() {
+                        events.write_default();
+                        for entity in to_despawn.iter() {
+                            info!("Despawning entity {:?}", entity);
+                            commands.entity(entity).despawn();
+                        }
                     }
-                }
-            },
+                },
+                rerun_hotpatched_systems,
+            )
+                .chain(),
         );
     }
 }
@@ -111,9 +115,23 @@ pub struct HotPatched;
 #[derive(Component, Default)]
 pub struct DespawnOnHotPatched;
 
+fn rerun_hotpatched_systems(
+    mut hot_patched_systems: ResMut<HotPatchedSystems>,
+    mut commands: Commands,
+) {
+    for system in hot_patched_systems.0.values_mut() {
+        if system.current_ptr == system.last_ptr {
+            continue;
+        }
+        system.last_ptr = system.current_ptr;
+        commands.run_system(system.id);
+        info!("Hot-patched system {}", system.name);
+    }
+}
+
 #[doc(hidden)]
 pub mod __macros_internal {
-    use std::any::TypeId;
+    use std::{any::TypeId, borrow::Cow};
 
     use bevy::{ecs::system::SystemId, platform::collections::HashMap, prelude::*};
 
@@ -123,6 +141,8 @@ pub mod __macros_internal {
     #[doc(hidden)]
     pub struct __HotPatchedSystem {
         pub id: SystemId,
-        pub current_ptr: u32,
+        pub current_ptr: u64,
+        pub last_ptr: u64,
+        pub name: Cow<'static, str>,
     }
 }

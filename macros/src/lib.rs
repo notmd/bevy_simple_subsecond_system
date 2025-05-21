@@ -59,6 +59,28 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let result = quote! {
         // Outer entry point: stable ABI, hot-reload safe
         #vis fn #original_fn_name(world: &mut bevy::ecs::world::World) #original_output {
+            use std::any::Any as _;
+            let type_id = #hotpatched_fn.type_id();
+            let contains_system = world.get_resource::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
+            if !contains_system {
+                let system_id = world.register_system(
+                    #hotpatched_fn,
+                );
+                let hot_fn_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
+                let system = bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
+                    id: system_id,
+                    current_ptr: hot_fn_ptr,
+                    last_ptr: hot_fn_ptr,
+                    name: bevy::ecs::system::IntoSystem::into_system(#original_fn_name).name(),
+                };
+                world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.insert(type_id, system);
+            }
+            let current_ptr = bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn).ptr_address();
+            let mut hot_patched_systems = world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
+            let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
+            hot_patched_system.last_ptr = hot_patched_system.current_ptr;
+            hot_patched_system.current_ptr = current_ptr;
+
             bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn)
                 .call((world,))
         }
@@ -70,6 +92,21 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
             let __unsafe_world = world.as_unsafe_world_cell_readonly();
 
             let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
+
+            trait ReturnValue {
+                fn return_value() -> Self;
+            }
+
+            impl ReturnValue for () {
+                fn return_value() -> Self {
+                    ()
+                }
+            }
+            impl ReturnValue for bevy::ecs::error::Result {
+                fn return_value() -> Self {
+                    bevy::ecs::error::Result::Ok(())
+                }
+            }
             match __validation {
                 Ok(()) => (),
                 Err(e) => {
@@ -86,7 +123,7 @@ pub fn hot(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         // Original function body moved into a standalone fn
-        #vis fn #original_wrapper_fn #generics(#inputs) #where_clause {
+        #vis fn #original_wrapper_fn #generics(#inputs) #where_clause #original_output {
             #block
         }
     };
