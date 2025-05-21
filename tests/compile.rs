@@ -38,7 +38,8 @@ fn add_to_app() {
                 system_with_generic::<Transform>,
                 save_to_previous::<Transform>,
                 apply_config::<DevConfig>,
-                debug_start,
+                exclusive_mut,
+                exclusive,
                 force_loading_screen.pipe(ignore_progress),
                 wait_in_screen(1.0),
             ),
@@ -139,8 +140,11 @@ fn save_to_previous<C: Component + Clone>(
 //#[hot]
 fn apply_config<C: Config>(world: &mut World, mut cursor: Local<EventCursor<AssetEvent<C>>>) {}
 
-//#[hot]
-fn debug_start(world: &mut World) {}
+#[hot]
+fn exclusive_mut(world: &mut World) {}
+
+#[hot]
+fn exclusive(world: &World) {}
 
 //#[hot]
 fn force_loading_screen(config: ConfigRef<DevConfig>, screen: CurrentRef<Screen>) -> Progress {
@@ -154,10 +158,10 @@ fn wait_in_screen(duration: f32) -> ScheduleConfigs<ScheduleSystem> {
 
 fn ignore_progress(_: In<Progress>) {}
 
-trait Config: Asset {}
+pub trait Config: Asset {}
 pub trait State: Resource + Sized {}
 #[derive(SystemParam)]
-pub struct CurrentRef<'w, S: State>(Option<Res<'w, S>>);
+pub struct CurrentRef<'w, S: State>(pub Option<Res<'w, S>>);
 
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Resource)]
 pub enum Screen {}
@@ -165,7 +169,7 @@ impl State for Screen {}
 
 #[derive(SystemParam)]
 pub struct ConfigRef<'w, C: Config> {
-    assets: Res<'w, Assets<C>>,
+    pub assets: Res<'w, Assets<C>>,
 }
 #[derive(Asset, Reflect)]
 struct DevConfig {

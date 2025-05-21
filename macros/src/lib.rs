@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
-    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, Token,
+    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, Token, Type, TypeReference,
     parse::{Parse, ParseStream},
     parse_macro_input,
 };
@@ -112,6 +112,39 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
             bevy::prelude::info!("Hot-patched system {name}");
         }
     };
+    let world_param = has_single_world_param(sig);
+
+    let hotpatched_fn_definition = match world_param {
+        WorldParam::Mut | WorldParam::Ref => quote! {
+            #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
+                #original_wrapper_fn(world)
+            }
+        },
+        WorldParam::None => quote! {
+            #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
+                use bevy::ecs::system::SystemState;
+                let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
+                let __unsafe_world = world.as_unsafe_world_cell_readonly();
+
+                let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
+
+                match __validation {
+                    Ok(()) => (),
+                    Err(e) => {
+                        if e.skipped {
+                            return;
+                        }
+                    }
+                }
+
+                let (#(#destructure),*) = __system_state.get_mut(world);
+                let __result = #original_wrapper_fn(#(#param_idents),*);
+                __system_state.apply(world);
+                #[allow(clippy::unused_unit)]
+                __result
+            }
+        },
+    };
 
     let result = quote! {
         // Outer entry point: stable ABI, hot-reload safe
@@ -147,28 +180,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         // Hotpatched version with stable signature
-        #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
-            use bevy::ecs::system::SystemState;
-            let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
-            let __unsafe_world = world.as_unsafe_world_cell_readonly();
-
-            let __validation = unsafe { SystemState::validate_param(&__system_state, __unsafe_world) };
-
-            match __validation {
-                Ok(()) => (),
-                Err(e) => {
-                    if e.skipped {
-                        return;
-                    }
-                }
-            }
-
-            let (#(#destructure),*) = __system_state.get_mut(world);
-            let __result = #original_wrapper_fn(#(#param_idents),*);
-            __system_state.apply(world);
-            #[allow(unused_unit)]
-            __result
-        }
+        #hotpatched_fn_definition
 
         // Original function body moved into a standalone fn
         #vis fn #original_wrapper_fn #impl_generics(#inputs) #where_clause #original_output {
@@ -177,4 +189,55 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     result.into()
+}
+
+enum WorldParam {
+    Ref,
+    Mut,
+    None,
+}
+
+fn has_single_world_param(sig: &syn::Signature) -> WorldParam {
+    if sig.inputs.len() != 1 {
+        return WorldParam::None;
+    }
+
+    let param = sig.inputs.first().unwrap();
+
+    let pat_type = match param {
+        FnArg::Typed(pt) => pt,
+        _ => return WorldParam::None,
+    };
+
+    match &*pat_type.ty {
+        Type::Reference(TypeReference {
+            mutability, elem, ..
+        }) => {
+            // Check type path is bevy::ecs::world::World
+            match &**elem {
+                Type::Path(type_path) => {
+                    let segments = &type_path.path.segments;
+                    let expected_path = ["bevy_ecs", "world", "World"];
+
+                    if segments.len() != expected_path.len() {
+                        //return WorldParam::None;
+                    }
+
+                    for (seg, expected) in segments.iter().zip(expected_path) {
+                        if seg.ident != expected {
+                            //return WorldParam::None;
+                        }
+                    }
+
+                    if mutability.is_some() {
+                        WorldParam::Mut
+                    } else {
+                        WorldParam::Ref
+                    }
+                }
+                _ => WorldParam::None,
+            }
+        }
+        _ => WorldParam::None,
+    }
 }
