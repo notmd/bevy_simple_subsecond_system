@@ -3,6 +3,7 @@
 #![doc = include_str!("../readme.md")]
 
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
@@ -84,5 +85,78 @@ pub mod __macros_internal {
         pub system_ptr_update_id: SystemId,
         pub current_ptr: u64,
         pub last_ptr: u64,
+    }
+}
+
+#[derive(Deref, DerefMut)]
+pub struct AppWrapper(send_wrapper::SendWrapper<bevy::app::App>);
+impl AppWrapper {
+    pub fn new() -> AppWrapper {
+        AppWrapper(send_wrapper::SendWrapper::new(bevy::app::App::default()))
+    }
+}
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct HotReloadUpdate;
+
+pub trait ReloadableAppExt {
+    /// Call this with plugins and systems and it will auto-add and remove systems in the `Update` schedule to your running app
+    fn reloadable(
+        &mut self,
+        func: impl FnMut(AppWrapper) -> AppWrapper + Send + Sync + 'static,
+    ) -> &mut App;
+}
+
+impl ReloadableAppExt for App {
+    fn reloadable(
+        &mut self,
+        mut func: impl FnMut(AppWrapper) -> AppWrapper + Send + Sync + 'static,
+    ) -> &mut App {
+        // we run this once during startup here so that way when we are actually restarting the app all the systems get added
+        let mut reload_app = func(AppWrapper::new());
+        if let Some(mut schedules) = reload_app.world_mut().get_resource_mut::<Schedules>() {
+            if let Some(mut update) = schedules.remove(Update) {
+                let mut hot_reload_update = schedules.entry(HotReloadUpdate);
+                *hot_reload_update.graph_mut() = std::mem::take(update.graph_mut());
+                hot_reload_update.initialize(self.world_mut()).unwrap();
+            }
+        }
+        self.add_systems(Update, |world: &mut World| {
+            let _ = world.try_run_schedule(HotReloadUpdate);
+        });
+        let mut reloadable_section =
+            std::sync::Mutex::new(dioxus_devtools::subsecond::HotFn::current(func));
+        self.add_systems(
+            PostUpdate,
+            move |_: Option<NonSend<NonSendMarker>>,
+                  mut schedules: ResMut<Schedules>,
+                  mut commands: Commands,
+                  hotreload_event: EventReader<HotPatched>| {
+                if hotreload_event.is_empty() {
+                    return;
+                }
+                let mut reload_app = reloadable_section
+                    .lock()
+                    .unwrap()
+                    .try_call((AppWrapper::new(),))
+                    .unwrap();
+                let Some(mut reload_schedules) = reload_app.world_mut().get_resource_mut::<Schedules>()
+                else {
+                    return;
+                };
+
+                let Some(mut reload_update) = reload_schedules.remove(Update) else {
+                    return;
+                };
+                schedules.remove(HotReloadUpdate);
+                let mut hot_reload_update = schedules.entry(HotReloadUpdate);
+                *hot_reload_update.graph_mut() = std::mem::take(reload_update.graph_mut());
+                commands.run_system_cached(|world: &mut World| {
+                    world.schedule_scope(HotReloadUpdate, |world, hot_reload_update| {
+                        hot_reload_update.initialize(world).unwrap();
+                    });
+                });
+            },
+        );
+        self
     }
 }

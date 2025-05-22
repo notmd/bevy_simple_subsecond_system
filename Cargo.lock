@@ -1061,6 +1061,7 @@ dependencies = [
  "bevy_simple_subsecond_system_macros",
  "crossbeam-channel",
  "dioxus-devtools",
+ "send_wrapper",
 ]
 
 [[package]]

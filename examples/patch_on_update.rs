@@ -1,12 +1,24 @@
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::prelude::*;
+use bevy_simple_subsecond_system::{AppWrapper, ReloadableAppExt};
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_systems(Startup, setup)
         .add_systems(Update, configure_ui)
+        .reloadable(|mut app: AppWrapper| -> AppWrapper {
+            app.add_systems(Update, do_thing);
+            app
+        })
         .run();
+}
+
+fn do_thing(res: ResMut<ButtonInput<KeyCode>>) {
+    if res.just_pressed(KeyCode::Space) {
+        println!("AWA owo");
+    }
 }
 
 #[derive(Component)]
@@ -34,7 +46,7 @@ fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands) {
         },
         children![
             Text::new("Hello, world!"),
-            Text::new("Try adding new texts below"),
+            Text::new("Try adding new texts below awa"),
         ],
     ));
 }
