@@ -203,7 +203,6 @@ See the `rerun_setup` example for detailed instructions.
 
 ## Examples
 
-
 Run the examples with
 ```sh
 dx serve --hot-patch --example name_of_the_example
@@ -213,6 +212,14 @@ e.g.
 ```sh
 dx serve --hot-patch --example rerun_setup
 ```
+
+## Features
+
+- Change systems' code and see the effect live at runtime
+- Change system signatures at runtime, e.g. by adding a new query or modifying an existing one
+- If your system calls other functions, you can also change those functions' code at runtime
+- Rerun setup systems automatically when changing them
+- Extremely small API: You only need the plugin struct and the `#[hot]` attribute
 
 ## Known Limitations
 
