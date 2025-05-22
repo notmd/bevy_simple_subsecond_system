@@ -213,19 +213,6 @@ e.g.
 dx serve --hot-patch --example rerun_setup
 ```
 
-## Rust Analyzer
-
-`rust-analyzer` may provide worse autocompletions in certain situations when using `#[hot]`. To fix this, simply tell it to ignore macro expansion for this crate by adding the following to your VS Code settings:
-```json
-"rust-analyzer.procMacro.ignored": {
-    "bevy_simple_subsecond_system_macros": [
-        "hot"
-    ]
-}
-```
-
-You can also just copy the `.vscode` directory of this repository into your project. The `settings.json` found within contains this exact setting.
-
 ## Features
 
 - Change systems' code and see the effect live at runtime
