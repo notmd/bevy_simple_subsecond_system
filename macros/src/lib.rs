@@ -3,7 +3,6 @@ use quote::{format_ident, quote};
 use syn::{
     FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath, TypeReference,
     parse::{Parse, ParseStream},
-    parse_macro_input,
 };
 
 struct HotArgs {
