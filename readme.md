@@ -195,6 +195,12 @@ fn greet() {
 
 </details>
 
+## Setup Methods
+
+UI is often spawned in `Startup` or `OnEnter` schedules. Hot-patching such setup systems would be fairly useless, as they wouldn't run again.
+For this reason, the plugin supports automatically rerunning systems that have been hot-patched. To opt-in, replace `#[hot]` with `#[hot(rerun_on_hot_patch = true)]`.
+See the `rerun_setup` example for detailed instructions.
+
 ## Examples
 
 
