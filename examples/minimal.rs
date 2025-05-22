@@ -10,5 +10,5 @@ fn main() {
 
 #[hot]
 fn greet() {
-    info!("Hello from a hotpatched system! Try changing this string while the app is running!")
+    info_once!("Hello from a hotpatched system! Try changing this string while the app is running!")
 }
