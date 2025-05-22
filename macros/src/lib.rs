@@ -126,7 +126,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let hotpatched_fn_definition = match has_single_world_param(sig) {
         WorldParam::Mut | WorldParam::Ref => quote! {
             #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
-                #original_wrapper_fn(world)
+                #original_wrapper_fn #maybe_generics(world)
             }
         },
         WorldParam::None => quote! {

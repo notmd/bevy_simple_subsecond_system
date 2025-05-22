@@ -37,6 +37,10 @@ fn add_to_app() {
                 system_with_return_value,
                 system_with_aliased_return,
                 system_with_generic::<Transform>,
+                system_with_generic_and_exclusive::<Transform>,
+                system_with_generic_static_and_exclusive::<Transform>,
+                system_with_generic_non_static_and_exclusive::<Transform>,
+                system_with_generic_and_exclusive_mut::<Transform>,
                 save_to_previous::<Transform>,
                 apply_config::<DevConfig>,
                 exclusive_mut,
@@ -129,10 +133,20 @@ fn system_with_aliased_return() -> Result {
     Ok(())
 }
 
-trait Comp: Component {}
-impl<T: Component> Comp for T {}
 #[hot]
-fn system_with_generic<T: Comp>(query: Query<&T>) {}
+fn system_with_generic<T: Component>(query: Query<&T>) {}
+
+#[hot]
+fn system_with_generic_and_exclusive<T: Component>(world: &World) {}
+
+#[hot]
+fn system_with_generic_static_and_exclusive<T: 'static>(world: &mut World) {}
+
+//#[hot]
+fn system_with_generic_non_static_and_exclusive<T>(world: &mut World) {}
+
+#[hot]
+fn system_with_generic_and_exclusive_mut<T: Component>(world: &mut World) {}
 
 #[derive(Component)]
 struct Previous<T: Component + Clone>(T);
