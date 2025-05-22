@@ -103,13 +103,13 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let maybe_run_call = if rerun_on_hot_patch {
         quote! {
             let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
-            bevy::prelude::info!("Hot-patched system {name}, executing it now.");
+            bevy::prelude::debug!("Hot-patched and rerunning system {name}");
             #hot_fn.call((world,))
         }
     } else {
         quote! {
             let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
-            bevy::prelude::info!("Hot-patched system {name}");
+            bevy::prelude::debug!("Hot-patched system {name}");
         }
     };
 
