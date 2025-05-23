@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::prelude::*;
-use bevy_simple_subsecond_system::{AppWrapper, ReloadableAppExt};
+use bevy_simple_subsecond_system::{HotPatchedApp, ReloadableAppExt};
 
 fn main() {
     App::new()
@@ -8,7 +8,7 @@ fn main() {
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_systems(Startup, setup)
         .add_systems(Update, configure_ui)
-        .reloadable(|mut app: AppWrapper| -> AppWrapper {
+        .reloadable(|mut app: HotPatchedApp| -> HotPatchedApp {
             app.add_systems(Update, do_thing);
             app
         })

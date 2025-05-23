@@ -105,10 +105,10 @@ pub mod __macros_internal {
 }
 
 #[derive(Deref, DerefMut)]
-pub struct AppWrapper(send_wrapper::SendWrapper<bevy::app::App>);
-impl AppWrapper {
-    pub fn new() -> AppWrapper {
-        AppWrapper(send_wrapper::SendWrapper::new(bevy::app::App::default()))
+pub struct HotPatchedApp(send_wrapper::SendWrapper<bevy::app::App>);
+impl HotPatchedApp {
+    pub fn new() -> HotPatchedApp {
+        HotPatchedApp(send_wrapper::SendWrapper::new(bevy::app::App::default()))
     }
 }
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
@@ -118,17 +118,17 @@ pub trait ReloadableAppExt {
     /// Call this with plugins and systems and it will auto-add and remove systems in the `Update` schedule to your running app
     fn reloadable(
         &mut self,
-        func: impl FnMut(AppWrapper) -> AppWrapper + Send + Sync + 'static,
+        func: impl FnMut(HotPatchedApp) -> HotPatchedApp + Send + Sync + 'static,
     ) -> &mut App;
 }
 
 impl ReloadableAppExt for App {
     fn reloadable(
         &mut self,
-        mut func: impl FnMut(AppWrapper) -> AppWrapper + Send + Sync + 'static,
+        mut func: impl FnMut(HotPatchedApp) -> HotPatchedApp + Send + Sync + 'static,
     ) -> &mut App {
         // we run this once during startup here so that way when we are actually restarting the app all the systems get added
-        let mut reload_app = func(AppWrapper::new());
+        let mut reload_app = func(HotPatchedApp::new());
         if let Some(mut schedules) = reload_app.world_mut().get_resource_mut::<Schedules>() {
             if let Some(mut update) = schedules.remove(Update) {
                 let mut hot_reload_update = schedules.entry(HotReloadUpdate);
@@ -153,9 +153,10 @@ impl ReloadableAppExt for App {
                 let mut reload_app = reloadable_section
                     .lock()
                     .unwrap()
-                    .try_call((AppWrapper::new(),))
+                    .try_call((HotPatchedApp::new(),))
                     .unwrap();
-                let Some(mut reload_schedules) = reload_app.world_mut().get_resource_mut::<Schedules>()
+                let Some(mut reload_schedules) =
+                    reload_app.world_mut().get_resource_mut::<Schedules>()
                 else {
                     return;
                 };
