@@ -164,7 +164,12 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let result = quote! {
+        #[cfg(any(target_family = "wasm", not(debug_assertions)))]
+        #vis fn #original_fn_name #impl_generics(#inputs) #where_clause #original_output {
+            #block
+        }
         // Outer entry point: stable ABI, hot-reload safe
+        #[cfg(all(not(target_family = "wasm"), debug_assertions))]
         #vis fn #original_fn_name #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
             use std::any::Any as _;
             let type_id = #hotpatched_fn #maybe_generics.type_id();
@@ -198,9 +203,11 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         // Hotpatched version with stable signature
+        #[cfg(all(not(target_family = "wasm"), debug_assertions))]
         #hotpatched_fn_definition
 
         // Original function body moved into a standalone fn
+        #[cfg(all(not(target_family = "wasm"), debug_assertions))]
         #vis fn #original_wrapper_fn #impl_generics(#inputs) #where_clause #original_output {
             #block
         }
