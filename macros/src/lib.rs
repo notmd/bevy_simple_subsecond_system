@@ -173,7 +173,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let hotpatched_fn_definition = match has_single_world_param(sig) {
         WorldParam::Mut | WorldParam::Ref => quote! {
             #vis fn #hotpatched_fn #impl_generics(world: &mut ::bevy_simple_subsecond_system::__macros_internal::World) #where_clause #original_output {
-                if let Some(mut reload_positions) = world.get_resource_mut::<bevy_simple_subsecond_system::ReloadPositions>() {
+                if let Some(mut reload_positions) = world.get_resource_mut::<bevy_simple_subsecond_system::hot_patched_app::ReloadPositions>() {
                     reload_positions.insert((file!(), line!(), line!() + #newlines));
                 }
                 #original_wrapper_fn #maybe_generics(world)
@@ -181,7 +181,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
         },
         WorldParam::None => quote! {
             #vis fn #hotpatched_fn #impl_generics(world: &mut ::bevy_simple_subsecond_system::__macros_internal::World) #where_clause #original_output {
-                if let Some(mut reload_positions) = world.get_resource_mut::<bevy_simple_subsecond_system::ReloadPositions>() {
+                if let Some(mut reload_positions) = world.get_resource_mut::<bevy_simple_subsecond_system::hot_patched_app::ReloadPositions>() {
                     reload_positions.insert((file!(), line!(), line!() + #newlines));
                 }
                 use ::bevy_simple_subsecond_system::__macros_internal::SystemState;
