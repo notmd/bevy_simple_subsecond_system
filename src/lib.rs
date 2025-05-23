@@ -2,11 +2,13 @@
 #![allow(clippy::type_complexity)]
 #![doc = include_str!("../readme.md")]
 
+#[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
+#[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use dioxus_devtools::{subsecond::apply_patch, *};
 
 /// Everything you need to use hotpatching
@@ -33,32 +35,45 @@ pub struct SimpleSubsecondPlugin;
 
 impl Plugin for SimpleSubsecondPlugin {
     fn build(&self, app: &mut App) {
-        let (sender, receiver) = crossbeam_channel::bounded::<HotPatched>(1);
-        connect(move |msg| {
-            if let DevserverMsg::HotReload(hot_reload_msg) = msg {
-                if let Some(jumptable) = hot_reload_msg.jump_table {
-                    // SAFETY: This is not unsafe, but anything using the updated jump table is.
-                    // The table must be built carefully
-                    unsafe { apply_patch(jumptable).unwrap() };
-                    sender.send(HotPatched).unwrap();
-                }
-            }
-        });
-
-        app.init_resource::<HotPatchedSystems>();
-
-        app.add_event::<HotPatched>().add_systems(
-            PreUpdate,
-            (
-                move |mut events: EventWriter<HotPatched>| {
-                    if receiver.try_recv().is_ok() {
-                        events.write_default();
+        #[cfg(target_family = "wasm")]
+        {
+            let _ = app;
+            warn!("Hotpatching is not supported on Wasm yet. Disabling SimpleSubsecondPlugin.");
+            return;
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            return;
+        }
+        #[cfg(all(not(target_family = "wasm"), debug_assertions))]
+        {
+            let (sender, receiver) = crossbeam_channel::bounded::<HotPatched>(1);
+            connect(move |msg| {
+                if let DevserverMsg::HotReload(hot_reload_msg) = msg {
+                    if let Some(jumptable) = hot_reload_msg.jump_table {
+                        // SAFETY: This is not unsafe, but anything using the updated jump table is.
+                        // The table must be built carefully
+                        unsafe { apply_patch(jumptable).unwrap() };
+                        sender.send(HotPatched).unwrap();
                     }
-                },
-                update_system_ptr,
-            )
-                .chain(),
-        );
+                }
+            });
+
+            app.init_resource::<HotPatchedSystems>();
+
+            app.add_event::<HotPatched>().add_systems(
+                PreUpdate,
+                (
+                    move |mut events: EventWriter<HotPatched>| {
+                        if receiver.try_recv().is_ok() {
+                            events.write_default();
+                        }
+                    },
+                    update_system_ptr,
+                )
+                    .chain(),
+            );
+        }
     }
 }
 
@@ -66,6 +81,7 @@ impl Plugin for SimpleSubsecondPlugin {
 #[derive(Event, Default)]
 pub struct HotPatched;
 
+#[cfg(all(not(target_family = "wasm"), debug_assertions))]
 fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: Commands) {
     for system in hot_patched_systems.0.values() {
         commands.run_system(system.system_ptr_update_id);
