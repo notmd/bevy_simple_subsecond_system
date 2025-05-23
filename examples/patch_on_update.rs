@@ -5,8 +5,13 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
+        .add_event::<MyEvent>()
         .add_systems(Startup, setup)
-        .add_systems(Update, configure_ui)
+        .with_hot_patch(|app: &mut App| {
+            app.add_systems(Update, some_reader);
+            app.add_systems(Update, write_event);
+            app.add_systems(Update, configure_ui);
+        })
         .run();
 }
 
@@ -17,6 +22,22 @@ struct Ui;
 fn setup(mut commands: Commands) {
     commands.spawn(Ui);
     commands.spawn(Camera2d);
+}
+
+#[derive(Event)]
+pub struct MyEvent;
+
+fn write_event(mut event_writer: EventWriter<MyEvent>, key: Res<ButtonInput<KeyCode>>) {
+    if key.just_pressed(KeyCode::Space) {
+        println!("Writing");
+        event_writer.write(MyEvent);
+    }
+}
+
+fn some_reader(mut event_reader: EventReader<MyEvent>) {
+    for _ in event_reader.read() {
+        println!("read eventtttttttt");
+    }
 }
 
 #[hot]
@@ -34,7 +55,7 @@ fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands) {
             ..default()
         },
         children![
-            Text::new("Hello, world!"),
+            Text::new("Hello, worldaa!"),
             Text::new("Try adding new texts below awa"),
         ],
     ));
