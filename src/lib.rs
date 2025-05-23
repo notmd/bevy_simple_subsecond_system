@@ -112,7 +112,7 @@ impl HotPatchedApp {
     }
 }
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct HotReloadUpdate;
+pub struct HotPatchUpdate;
 
 pub trait ReloadableAppExt {
     /// Call this with plugins and systems and it will auto-add and remove systems in the `Update` schedule to your running app
@@ -131,13 +131,13 @@ impl ReloadableAppExt for App {
         let mut reload_app = func(HotPatchedApp::new());
         if let Some(mut schedules) = reload_app.world_mut().get_resource_mut::<Schedules>() {
             if let Some(mut update) = schedules.remove(Update) {
-                let mut hot_reload_update = schedules.entry(HotReloadUpdate);
+                let mut hot_reload_update = schedules.entry(HotPatchUpdate);
                 *hot_reload_update.graph_mut() = std::mem::take(update.graph_mut());
                 hot_reload_update.initialize(self.world_mut()).unwrap();
             }
         }
         self.add_systems(Update, |world: &mut World| {
-            let _ = world.try_run_schedule(HotReloadUpdate);
+            let _ = world.try_run_schedule(HotPatchUpdate);
         });
         let mut reloadable_section =
             std::sync::Mutex::new(dioxus_devtools::subsecond::HotFn::current(func));
@@ -164,11 +164,11 @@ impl ReloadableAppExt for App {
                 let Some(mut reload_update) = reload_schedules.remove(Update) else {
                     return;
                 };
-                schedules.remove(HotReloadUpdate);
-                let mut hot_reload_update = schedules.entry(HotReloadUpdate);
+                schedules.remove(HotPatchUpdate);
+                let mut hot_reload_update = schedules.entry(HotPatchUpdate);
                 *hot_reload_update.graph_mut() = std::mem::take(reload_update.graph_mut());
                 commands.run_system_cached(|world: &mut World| {
-                    world.schedule_scope(HotReloadUpdate, |world, hot_reload_update| {
+                    world.schedule_scope(HotPatchUpdate, |world, hot_reload_update| {
                         hot_reload_update.initialize(world).unwrap();
                     });
                 });
