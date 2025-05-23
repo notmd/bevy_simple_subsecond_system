@@ -24,22 +24,20 @@
 //! }
 //! ```
 
-use bevy::ecs::component::Component;
-use bevy::ecs::query::QueryBuilder;
-use bevy::log::warn;
-use bevy::platform::sync::Arc;
-use bevy::{
-    ecs::{
-        entity::Entity,
-        reflect::{AppTypeRegistry, ReflectComponent},
-        resource::Resource,
-        system::{Res, ResMut},
-        world::World,
-    },
-    prelude::{Deref, DerefMut},
-    reflect::{FromType, Reflect, prelude::ReflectDefault},
-    utils::TypeIdMap,
+use bevy_derive::{Deref, DerefMut};
+use bevy_ecs::{
+    component::Component,
+    entity::Entity,
+    query::QueryBuilder,
+    reflect::{AppTypeRegistry, ReflectComponent},
+    resource::Resource,
+    system::{Res, ResMut},
+    world::World,
 };
+use bevy_log::warn;
+use bevy_platform::sync::Arc;
+use bevy_reflect::{FromType, Reflect, std_traits::ReflectDefault};
+use bevy_utils::TypeIdMap;
 use core::any::{Any, TypeId};
 
 /// Enables migration for your components. Should be derived and

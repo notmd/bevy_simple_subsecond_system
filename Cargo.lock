@@ -1055,17 +1055,25 @@ dependencies = [
 
 [[package]]
 name = "bevy_simple_subsecond_system"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "bevy",
+ "bevy_app",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_ecs_macros",
+ "bevy_log",
+ "bevy_platform",
+ "bevy_reflect",
  "bevy_simple_subsecond_system_macros",
+ "bevy_utils",
  "crossbeam-channel",
  "dioxus-devtools",
 ]
 
 [[package]]
 name = "bevy_simple_subsecond_system_macros"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "proc-macro2",
  "quote",
