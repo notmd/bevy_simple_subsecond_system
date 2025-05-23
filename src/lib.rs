@@ -114,16 +114,16 @@ impl HotPatchedApp {
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct HotPatchUpdate;
 
-pub trait ReloadableAppExt {
+pub trait HotPatchedAppExt {
     /// Call this with plugins and systems and it will auto-add and remove systems in the `Update` schedule to your running app
-    fn reloadable(
+    fn with_hot_patch(
         &mut self,
         func: impl FnMut(HotPatchedApp) -> HotPatchedApp + Send + Sync + 'static,
     ) -> &mut App;
 }
 
-impl ReloadableAppExt for App {
-    fn reloadable(
+impl HotPatchedAppExt for App {
+    fn with_hot_patch(
         &mut self,
         mut func: impl FnMut(HotPatchedApp) -> HotPatchedApp + Send + Sync + 'static,
     ) -> &mut App {
