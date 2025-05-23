@@ -221,7 +221,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                         return;
                     }
                     // TODO: we simply ignore the `Result` here, but we should be propagating it
-                    #maybe_run_call;
+                    let _ = {#maybe_run_call};
                 });
                 let system = ::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     system_ptr_update_id,
