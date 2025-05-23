@@ -7,7 +7,7 @@ fn main() {
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_event::<MyEvent>()
         .add_systems(Startup, setup)
-        .add_hot_plugin(|app: &mut App| {
+        .with_hot_patch(|app: &mut App| {
             app.add_systems(Update, some_reader);
             app.add_systems(Update, write_event);
             app.add_systems(Update, configure_ui);
