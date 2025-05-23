@@ -110,13 +110,13 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let maybe_run_call = if rerun_on_hot_patch {
         quote! {
-            let name = ::bevy_simple_subsecond_system::_macros_internal::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
+            let name = ::bevy_simple_subsecond_system::__macros_internal::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
             ::bevy_simple_subsecond_system::__macros_internal::debug!("Hot-patched and rerunning system {name}");
             #hot_fn.call((world,))
         }
     } else {
         quote! {
-            let name = ::bevy_simple_subsecond_system::_macros_internal::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
+            let name = ::bevy_simple_subsecond_system::__macros_internal::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
             bevy::prelude::debug!("Hot-patched system {name}");
         }
     };
