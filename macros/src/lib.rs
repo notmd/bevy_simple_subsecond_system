@@ -126,6 +126,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 
             #[cfg(all(not(target_family = "wasm"), debug_assertions))]
+            #[allow(unused_mut)]
             #vis fn #original_fn_name #impl_generics(#inputs) #where_clause #original_output {
                 #hot_fn.call((#(#param_idents,)*))
             }
