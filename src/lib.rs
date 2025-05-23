@@ -13,7 +13,7 @@ use dioxus_devtools::{subsecond::apply_patch, *};
 
 /// Everything you need to use hotpatching
 pub mod prelude {
-    pub use super::{HotPatched, SimpleSubsecondPlugin};
+    pub use super::{HotPatched, HotPatchedApp, HotPatchedAppExt as _, SimpleSubsecondPlugin};
     pub use bevy_simple_subsecond_system_macros::*;
 }
 
@@ -104,6 +104,7 @@ pub mod __macros_internal {
     }
 }
 
+/// Wrapper around [`App`] used by [`HotPatchedAppExt::with_hot_patch`], which allows you to add and remove systems at runtime.
 #[derive(Deref, DerefMut)]
 pub struct HotPatchedApp(send_wrapper::SendWrapper<bevy::app::App>);
 
@@ -114,10 +115,30 @@ impl Default for HotPatchedApp {
 }
 
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct HotPatchUpdate;
+struct HotPatchUpdate;
 
+/// Trait for [`App`] to add and remove systems at runtime.
 pub trait HotPatchedAppExt {
-    /// Call this with plugins and systems and it will auto-add and remove systems in the `Update` schedule to your running app
+    /// Call this with plugins and systems and it will auto-add and remove systems in the `Update` schedule to your running app.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// # use bevy::prelude::*;
+    /// # use bevy_simple_subsecond_system::prelude::*;
+    ///
+    /// App::new()
+    ///     .add_plugins(DefaultPlugins)
+    ///     .add_plugins(SimpleSubsecondPlugin::default())
+    ///     .with_hot_patch(|mut app| {
+    ///         app.add_systems(Update, my_system);
+    ///         app
+    ///     });
+    ///
+    /// fn my_system() {
+    ///     info!("Hello, world!");
+    /// }
+    /// ```
     fn with_hot_patch(
         &mut self,
         func: impl FnMut(HotPatchedApp) -> HotPatchedApp + Send + Sync + 'static,

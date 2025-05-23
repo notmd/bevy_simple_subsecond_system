@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::prelude::*;
-use bevy_simple_subsecond_system::{HotPatchedApp, HotPatchedAppExt};
 
 fn main() {
     App::new()
