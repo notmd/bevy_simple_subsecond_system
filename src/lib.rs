@@ -16,12 +16,6 @@ pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use dioxus_devtools::{subsecond::apply_patch, *};
 
-/// Reexports of bevy crates for macro usage
-pub mod reexports {
-    pub use bevy_ecs;
-    pub use bevy_log;
-}
-
 /// Everything you need to use hotpatching
 pub mod prelude {
     pub use super::{HotPatched, SimpleSubsecondPlugin};
@@ -100,8 +94,12 @@ fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: 
 }
 #[doc(hidden)]
 pub mod __macros_internal {
-    use bevy_ecs::system::SystemId;
-    use bevy_ecs_macros::Resource;
+    pub use bevy_ecs::{
+        system::{IntoSystem, SystemId, SystemState},
+        world::World,
+    };
+    pub use bevy_ecs_macros::Resource;
+    pub use bevy_log::debug;
     use bevy_platform::collections::HashMap;
     use std::any::TypeId;
 
