@@ -30,7 +30,6 @@ fn configure_ui(ui: Single<Entity, With<Ui>>, mut commands: Commands) {
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
             row_gap: Val::Px(20.0),
-
             ..default()
         },
         children![

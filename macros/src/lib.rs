@@ -7,7 +7,6 @@ use syn::{
     DeriveInput, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath,
     TypeReference,
     parse::{Parse, ParseStream},
-    parse_macro_input,
 };
 
 struct HotArgs {
@@ -42,10 +41,19 @@ impl Parse for HotArgs {
 #[proc_macro_attribute]
 pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the attribute as a Meta
-    let args = parse_macro_input!(attr as HotArgs);
+    let args = syn::parse::<HotArgs>(attr.clone());
+    let args = match args {
+        Ok(parsed) => parsed,
+        Err(_) => return item, // If parsing the attributes fails, just return the original function.
+    };
     let rerun_on_hot_patch = args.rerun_on_hot_patch.unwrap_or(false);
 
-    let input_fn = parse_macro_input!(item as ItemFn);
+    let input_fn = syn::parse::<ItemFn>(item.clone());
+    let input_fn = match input_fn {
+        Ok(parsed) => parsed,
+        Err(_) => return item, // If parsing the function fails, return it unchanged.
+    };
+
     let vis = &input_fn.vis;
     let sig = &input_fn.sig;
     let original_output = &sig.output;
