@@ -3,7 +3,7 @@ members = [".", "examples/*", "macros"]
 
 [package]
 name = "bevy_simple_subsecond_system"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2024"
 authors = ["Jan Hohenheim <jan@hohenheim.ch>"]
 exclude = ["examples/"]
@@ -21,7 +21,7 @@ bevy_app = { version = "0.16.0" }
 bevy_platform = { version = "0.16.0" }
 bevy_ecs_macros = { version = "0.16.0" }
 dioxus-devtools = { version = "0.7.0-alpha.0" }
-bevy_simple_subsecond_system_macros = { path = "macros", version = "0.1.5" }
+bevy_simple_subsecond_system_macros = { path = "macros", version = "0.1.6" }
 crossbeam-channel = "0.5.15"
 
 [dev-dependencies]

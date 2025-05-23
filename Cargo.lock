@@ -1055,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_simple_subsecond_system"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "bevy",
  "bevy_app",
@@ -1070,7 +1070,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_simple_subsecond_system_macros"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "proc-macro2",
  "quote",

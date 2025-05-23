@@ -7,11 +7,13 @@ use syn::{
 
 struct HotArgs {
     rerun_on_hot_patch: Option<bool>,
+    hot_patch_signature: Option<bool>,
 }
 
 impl Parse for HotArgs {
     fn parse(input: ParseStream) -> std::result::Result<HotArgs, syn::Error> {
         let mut rerun_on_hot_patch = None;
+        let mut hot_patch_signature = None;
 
         while !input.is_empty() {
             let ident: Ident = input.parse()?;
@@ -20,6 +22,9 @@ impl Parse for HotArgs {
             if ident == "rerun_on_hot_patch" {
                 let value: LitBool = input.parse()?;
                 rerun_on_hot_patch = Some(value.value);
+            } else if ident == "hot_patch_signature" {
+                let value: LitBool = input.parse()?;
+                hot_patch_signature = Some(value.value);
             } else {
                 return Err(syn::Error::new_spanned(ident, "Unknown attribute key"));
             }
@@ -29,7 +34,10 @@ impl Parse for HotArgs {
             }
         }
 
-        Ok(HotArgs { rerun_on_hot_patch })
+        Ok(HotArgs {
+            rerun_on_hot_patch,
+            hot_patch_signature,
+        })
     }
 }
 
@@ -42,6 +50,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(_) => return item, // If parsing the attributes fails, just return the original function.
     };
     let rerun_on_hot_patch = args.rerun_on_hot_patch.unwrap_or(false);
+    let hot_patch_signature = args.hot_patch_signature.unwrap_or(false);
 
     let input_fn = syn::parse::<ItemFn>(item.clone());
     let input_fn = match input_fn {
@@ -107,6 +116,29 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let hot_fn = quote! {
         ::bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn #maybe_generics)
     };
+
+    if !hot_patch_signature && !rerun_on_hot_patch {
+        let result = quote! {
+            #[cfg(any(target_family = "wasm", not(debug_assertions)))]
+            #vis fn #original_fn_name #impl_generics(#inputs) #where_clause #original_output {
+                #block
+            }
+
+
+            #[cfg(all(not(target_family = "wasm"), debug_assertions))]
+            #[allow(unused_mut)]
+            #vis fn #original_fn_name #impl_generics(#inputs) #where_clause #original_output {
+                #hot_fn.call((#(#param_idents,)*))
+            }
+
+
+            #[cfg(all(not(target_family = "wasm"), debug_assertions))]
+            #vis fn #hotpatched_fn #impl_generics(#inputs) #where_clause #original_output {
+                #block
+            }
+        };
+        return result.into();
+    }
 
     let maybe_run_call = if rerun_on_hot_patch {
         quote! {
@@ -189,7 +221,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                         return;
                     }
                     // TODO: we simply ignore the `Result` here, but we should be propagating it
-                    #maybe_run_call;
+                    let _ = {#maybe_run_call};
                 });
                 let system = ::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     system_ptr_update_id,
