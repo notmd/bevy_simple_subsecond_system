@@ -57,7 +57,9 @@ use core::any::{Any, TypeId};
 ///
 /// Supports renaming the struct and field addition/removal.
 pub trait HotPatchMigrate: Any + Component + Reflect + Default {
-    /// TODO
+    /// The default derive implementation is a hot patchable function
+    /// which means that this will always return the current type id
+    /// (if a struct is changed it will start returning a new type id).
     fn current_type_id() -> TypeId;
 }
 
@@ -87,11 +89,11 @@ pub(crate) fn migrate(world: &mut World) {
     let changed: Vec<_> = migrations
         .iter()
         .filter(|(prev, current)| prev != &&current())
-        .map(|(prev, current)| (prev.clone(), current.clone()))
+        .map(|(prev, current)| (*prev, current.clone()))
         .collect();
 
     for (prev, current) in &changed {
-        migrate_component(world, prev.clone(), current());
+        migrate_component(world, *prev, current());
     }
 
     // Track hot patches to the new struct
