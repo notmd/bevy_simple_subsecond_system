@@ -1,3 +1,4 @@
+use crate::__macros_internal::__ReloadPositions as ReloadPositions;
 use bevy_app::{
     App, NonSendMarker, PostStartup, PostUpdate, PreStartup, PreUpdate, Startup, Update,
 };
@@ -5,9 +6,8 @@ use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::prelude::*;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use bevy_ecs::system::{Commands, Res};
-use bevy_ecs_macros::{Resource, ScheduleLabel};
+use bevy_ecs_macros::ScheduleLabel;
 use bevy_log::{debug, error};
-use bevy_platform::collections::HashSet;
 
 use crate::HotPatched;
 
@@ -20,9 +20,6 @@ impl Default for HotPatchedApp {
         HotPatchedApp(send_wrapper::SendWrapper::new(App::default()))
     }
 }
-
-#[derive(Deref, DerefMut, Resource, Default, Debug)]
-pub struct ReloadPositions(pub HashSet<(&'static str, u32, u32)>);
 
 /// The [`Startup`] schedule, but rerun on hot-reload.
 /// Only valid inside the context of [`HotPatchedAppExt::with_hot_patch`].

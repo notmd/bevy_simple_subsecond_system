@@ -19,7 +19,7 @@ pub mod hot_patched_app;
 pub mod prelude {
     pub use super::{
         HotPatched, SimpleSubsecondPlugin,
-        hot_patched_app::{HotPatchedAppExt as _, ReloadPositions, StartupRerunHotPatch},
+        hot_patched_app::{HotPatchedAppExt as _, StartupRerunHotPatch},
     };
     pub use bevy_simple_subsecond_system_macros::*;
 }
@@ -96,13 +96,14 @@ fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: 
 }
 #[doc(hidden)]
 pub mod __macros_internal {
+    use bevy_derive::{Deref, DerefMut};
     pub use bevy_ecs::{
         system::{IntoSystem, SystemId, SystemState},
         world::World,
     };
     pub use bevy_ecs_macros::Resource;
     pub use bevy_log::debug;
-    use bevy_platform::collections::HashMap;
+    use bevy_platform::collections::{HashMap, HashSet};
     use std::any::TypeId;
 
     #[derive(Resource, Default)]
@@ -114,4 +115,8 @@ pub mod __macros_internal {
         pub current_ptr: u64,
         pub last_ptr: u64,
     }
+
+    #[doc(hidden)]
+    #[derive(Deref, DerefMut, Resource, Default, Debug)]
+    pub struct __ReloadPositions(pub HashSet<(&'static str, u32, u32)>);
 }

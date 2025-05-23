@@ -20,7 +20,7 @@ fn main() {
 }
 
 #[hot(hot_patch_signature = true)]
-fn spawn_ui(mut commands: Commands, mut res: ResMut<ReloadPositions>) {
+fn spawn_ui(mut commands: Commands) {
     commands.queue(|world: &mut World| {
         // Currently bevy forgets to do `track_caller` on `commands.spawn` so to
         // auto-despawn entities spawned inside a StartupRerunHotPatch schedule
