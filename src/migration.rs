@@ -1,29 +1,71 @@
-//! TODO
+//! Enabled component migration when hot patching happens.
+//!
+//! Implement [`Reflect`], [`HotPatchMigrate`], [`Default`] and [`Component`]
+//! and reflect them for the component you want to migrate.
+//! ```
+//! #[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
+//! #[reflect(Component, Default, HotPatchMigrate)]
+//! struct Example {
+//!     field: usize,
+//! }
+//! ```
+//!
+//! Additionally you will need to register these components and their
+//! new, hot patched versions. This can be done in a startup system like this:
+//! ```
+//! // When creating the app:
+//! // app.add_systems(Startup, register_components)
+//!
+//! #[hot(rerun_on_hot_patch = true)]
+//! fn register_components(registry: Res<AppTypeRegistry>) {
+//!     let mut registry = registry.write();
+//!     registry.register::<Example>();
+//!     // ...register other components
+//! }
+//! ```
 
+use bevy::ecs::component::Component;
+use bevy::ecs::query::QueryBuilder;
+use bevy::log::warn;
+use bevy::platform::sync::Arc;
 use bevy::{
     ecs::{
         entity::Entity,
         reflect::{AppTypeRegistry, ReflectComponent},
         resource::Resource,
-        system::{Commands, Query, Res, ResMut, RunSystemOnce},
+        system::{Res, ResMut},
         world::World,
     },
-    platform::collections::HashMap,
     prelude::{Deref, DerefMut},
     reflect::{FromType, Reflect, prelude::ReflectDefault},
+    utils::TypeIdMap,
 };
-use std::{
-    any::{Any, TypeId},
-    sync::Arc,
-};
+use core::any::{Any, TypeId};
 
-/// TODO
-pub trait HotPatchMigrate: Any + Reflect + Default {
+/// Enables migration for your components. Should be derived and
+/// not implemented manually.
+///
+/// Requires that the type also implementes `Any`, `Reflect`,
+/// `Component` and `Default`. Last two (and `HotPatchMigrate`)
+/// should be reflected.
+///
+/// ```
+/// #[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
+/// #[reflect(Component, Default, HotPatchMigrate)]
+/// struct Example {
+///     field: usize,
+/// }
+/// ```
+///
+/// Supports renaming the struct and field addition/removal.
+pub trait HotPatchMigrate: Any + Component + Reflect + Default {
     /// TODO
     fn current_type_id() -> TypeId;
 }
 
-/// TODO
+/// `TypeData` corresponding to the `HotPatchMigrate` trait. It contains the
+/// `HotPatchMigrate::current_type_id` method. You don't need to use this
+/// directly for hot patching or struct migration.
 #[derive(Clone)]
 pub struct ReflectHotPatchMigrate(pub Arc<dyn Fn() -> TypeId + Sync + Send + 'static>);
 
@@ -34,14 +76,14 @@ impl<T: HotPatchMigrate> FromType<T> for ReflectHotPatchMigrate {
 }
 
 #[derive(Resource, Default, Deref, DerefMut)]
-pub(crate) struct ComponentMigrations(
-    HashMap<TypeId, Arc<dyn Fn() -> TypeId + Sync + Send + 'static>>,
-);
+pub(crate) struct ComponentMigrations(TypeIdMap<Arc<dyn Fn() -> TypeId + Sync + Send + 'static>>);
 
 pub(crate) fn migrate(world: &mut World) {
-    world
-        .run_system_cached(register_migratable_components)
-        .unwrap();
+    if let Err(err) = world.run_system_cached(register_migratable_components) {
+        warn!(
+            "Error when registerating components to migrate. Some components might not have been migrated. Error: '{err}'"
+        );
+    };
 
     let migrations = world.resource::<ComponentMigrations>();
     let changed: Vec<_> = migrations
@@ -74,38 +116,61 @@ fn register_migratable_components(
     }
 }
 
-fn migrate_component(world: &mut World, from: TypeId, to: TypeId) {
-    world
-        .run_system_once(
-            move |es: Query<Entity>, world: &World, mut commands: Commands| {
-                for e in es {
-                    match world.get_reflect(e, from) {
-                        Ok(c) => {
-                            let c = c.reflect_clone().unwrap();
-                            commands.queue(move |world: &mut World| {
-                                world.resource_scope::<AppTypeRegistry, ()>(|world, registry| {
-                                    let registry = registry.read();
-                                    let reflect_default =
-                                        registry.get_type_data::<ReflectDefault>(to).unwrap();
-                                    let reflect_component =
-                                        registry.get_type_data::<ReflectComponent>(to).unwrap();
+fn migrate_component(world: &mut World, prev: TypeId, to: TypeId) {
+    world.resource_scope::<AppTypeRegistry, ()>(|world, registry| {
+        let registry = registry.read();
+        let Some(from_component_id) = world.components().get_id(prev) else {
+            // If there is no ComponentId, it doesn't exist in bevy's storages so there is nothing to migrate
+            return;
+        };
 
-                                    let entity = &mut world.entity_mut(e);
+        let name = world
+            .components()
+            .get_name(from_component_id)
+            .unwrap_or_else(|| "Unknown".into());
+        let Some(prev_reflect_component) = registry.get_type_data::<ReflectComponent>(prev) else {
+            warn!("Component '{name}' needs to `#[reflect(Component)]`");
+            return;
+        };
+        let Some(reflect_default) = registry.get_type_data::<ReflectDefault>(to) else {
+            warn!("Component '{name}' needs to `#[reflect(Default)]`");
+            return;
+        };
+        let Some(reflect_component) = registry.get_type_data::<ReflectComponent>(to) else {
+            warn!("Component '{name}' needs to `#[reflect(Component)]`");
+            return;
+        };
 
-                                    reflect_component.insert(
-                                        entity,
-                                        &*reflect_default.default(),
-                                        &registry,
-                                    );
+        // Migrate each entity that contains a component matching `from` type id
+        let mut builder = QueryBuilder::<Entity>::new(world);
+        builder.with_id(from_component_id);
+        let mut query = builder.build();
 
-                                    reflect_component.apply(entity, &*c);
-                                });
-                            });
-                        }
-                        Err(_) => {}
-                    }
-                }
-            },
-        )
-        .unwrap();
+        let entities: Vec<_> = query.iter(world).collect();
+
+        for entity in entities {
+            let entity_mut = world.entity_mut(entity);
+            let Some(prev_value) = prev_reflect_component.reflect(&entity_mut) else {
+                let name = world
+                    .components()
+                    .get_name(from_component_id)
+                    .unwrap_or_else(|| "Unknown".into());
+                warn!("Tried to migrate entity {entity} but it didn't contain component '{name}'");
+                continue;
+            };
+
+            let mut value = reflect_default.default();
+            if let Err(err) = value.try_apply(prev_value) {
+                let name = world
+                    .components()
+                    .get_name(from_component_id)
+                    .unwrap_or_else(|| "Unknown".into());
+                warn!("Tried to migrate component '{name}' on entity {entity} but operation wasn't supported: {err}. New component will contain default values.");
+            }
+
+            let mut entity_mut = world.entity_mut(entity);
+            prev_reflect_component.remove(&mut entity_mut);
+            reflect_component.insert(&mut entity_mut, value.as_partial_reflect(), &registry);
+        }
+    });
 }

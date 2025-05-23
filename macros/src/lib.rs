@@ -1,3 +1,6 @@
+//! Implements the Bevy Simple Subsecond System derives.
+#![warn(missing_docs)]
+
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
@@ -35,6 +38,7 @@ impl Parse for HotArgs {
     }
 }
 
+/// Annotate your systems with `#[hot]` to enable hotpatching for them.
 #[proc_macro_attribute]
 pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the attribute as a Meta
@@ -289,15 +293,18 @@ fn is_result_unit(output: &ReturnType) -> bool {
     }
 }
 
+/// Derive `HotPatchMigrate` and reflect it for your struct to be migrated
+/// when a hot patch happens. You will also need to implement/derive and
+/// reflect `Component` and `Default`.
 #[proc_macro_derive(HotPatchMigrate)]
 pub fn derive_hot_patch_migrate(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
 
     let expanded = quote! {
-        impl bevy_simple_subsecond_system::migration::HotPatchMigrate for #name {
-            fn current_type_id() -> std::any::TypeId {
-                bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(|| std::any::TypeId::of::<Self>()).call(())
+        impl ::bevy_simple_subsecond_system::migration::HotPatchMigrate for #name {
+            fn current_type_id() -> ::core::any::TypeId {
+                ::bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(|| ::core::any::TypeId::of::<Self>()).call(())
             }
         }
     };
