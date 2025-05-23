@@ -11,7 +11,7 @@ use bevy_derive::{Deref, DerefMut};
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use bevy_ecs::system::{Commands, Res};
 use bevy_ecs::{prelude::*, schedule::ScheduleLabel};
-use bevy_log::error;
+use bevy_log::{debug, error};
 use bevy_platform::collections::HashSet;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
@@ -334,14 +334,13 @@ impl HotPatchedAppExt for App {
                                     continue;
                                 };
                                 let Some(location) = location else { continue };
-                                //println!("location is: {:?}", location);
                                 for (file, line_start, line_end) in reload_positions.iter() {
                                     if location.file() != *file {
                                         continue;
                                     }
                                     if location.line() > *line_start && location.line() < *line_end
                                     {
-                                        println!("despawning the thing at: {location:?}");
+                                        debug!("despawning an entity at: {location:?}");
                                         commands.entity(e.entity()).despawn();
                                     }
                                 }
