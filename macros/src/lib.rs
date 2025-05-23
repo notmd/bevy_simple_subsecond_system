@@ -105,18 +105,18 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let hot_fn = quote! {
-        bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn #maybe_generics)
+        ::bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(#hotpatched_fn #maybe_generics)
     };
 
     let maybe_run_call = if rerun_on_hot_patch {
         quote! {
-            let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
-            bevy::prelude::debug!("Hot-patched and rerunning system {name}");
+            let name = ::bevy::ecs::system::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
+            ::bevy::prelude::debug!("Hot-patched and rerunning system {name}");
             #hot_fn.call((world,))
         }
     } else {
         quote! {
-            let name = bevy::ecs::system::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
+            let name = ::bevy::ecs::system::IntoSystem::into_system(#original_fn_name #maybe_generics).name();
             bevy::prelude::debug!("Hot-patched system {name}");
         }
     };
@@ -133,13 +133,13 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let hotpatched_fn_definition = match has_single_world_param(sig) {
         WorldParam::Mut | WorldParam::Ref => quote! {
-            #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
+            #vis fn #hotpatched_fn #impl_generics(world: &mut ::bevy::ecs::world::World) #where_clause #original_output {
                 #original_wrapper_fn #maybe_generics(world)
             }
         },
         WorldParam::None => quote! {
-            #vis fn #hotpatched_fn #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
-                use bevy::ecs::system::SystemState;
+            #vis fn #hotpatched_fn #impl_generics(world: &mut ::bevy::ecs::world::World) #where_clause #original_output {
+                use ::bevy::ecs::system::SystemState;
                 let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
                 let __unsafe_world = world.as_unsafe_world_cell_readonly();
 
@@ -170,15 +170,15 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
         // Outer entry point: stable ABI, hot-reload safe
         #[cfg(all(not(target_family = "wasm"), debug_assertions))]
-        #vis fn #original_fn_name #impl_generics(world: &mut bevy::ecs::world::World) #where_clause #original_output {
+        #vis fn #original_fn_name #impl_generics(world: &mut ::bevy::ecs::world::World) #where_clause #original_output {
             use std::any::Any as _;
             let type_id = #hotpatched_fn #maybe_generics.type_id();
-            let contains_system = world.get_resource::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
+            let contains_system = world.get_resource::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
             if !contains_system {
                 let hot_fn_ptr = #hot_fn.ptr_address();
-                let system_ptr_update_id = world.register_system(move |world: &mut bevy::ecs::world::World| {
+                let system_ptr_update_id = world.register_system(move |world: &mut ::bevy::ecs::world::World| {
                     let needs_update = {
-                        let mut hot_patched_systems = world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
+                        let mut hot_patched_systems = world.get_resource_mut::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
                         let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
                         hot_patched_system.current_ptr = #hot_fn.ptr_address();
                         let needs_update = hot_patched_system.current_ptr != hot_patched_system.last_ptr;
@@ -191,12 +191,12 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                     // TODO: we simply ignore the `Result` here, but we should be propagating it
                     #maybe_run_call;
                 });
-                let system = bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
+                let system = ::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     system_ptr_update_id,
                     current_ptr: hot_fn_ptr,
                     last_ptr: hot_fn_ptr,
                 };
-                world.get_resource_mut::<bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.insert(type_id, system);
+                world.get_resource_mut::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.insert(type_id, system);
             }
 
             #hot_fn.call((world,))
