@@ -116,7 +116,7 @@ pub mod __macros_internal {
     }
 }
 
-/// Wrapper around [`App`] used by [`HotPatchedAppExt::add_hot_plugin`], which allows you to add and remove systems at runtime.
+/// Wrapper around [`App`] used by [`HotPatchedAppExt::with_hot_patch`], which allows you to add and remove systems at runtime.
 #[derive(Deref, DerefMut)]
 struct HotPatchedApp(send_wrapper::SendWrapper<App>);
 
@@ -154,7 +154,7 @@ pub trait HotPatchedAppExt {
     /// App::new()
     ///     .add_plugins(DefaultPlugins)
     ///     .add_plugins(SimpleSubsecondPlugin::default())
-    ///     .add_hot_plugin(|app: &mut App| {
+    ///     .with_hot_patch(|app: &mut App| {
     ///         app.add_systems(Update, my_system);
     ///         app.add_systems(PostUpdate, second_system);
     ///     });
