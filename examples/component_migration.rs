@@ -5,42 +5,31 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
-        .add_systems(Startup, spawn_entities)
+        .add_systems(Startup, setup)
         .add_systems(Startup, register_components)
         .add_systems(Update, print_components)
         .run();
 }
 
-fn spawn_entities(mut commands: Commands) {
-    commands.spawn((
-        Example {
-            field_a: 5,
-            ..Default::default()
-        },
-        Example2 {
-            field_b: 1005,
-            ..Default::default()
-        },
-    ));
-    commands.spawn((
-        Example {
-            field_a: 8,
-            ..Default::default()
-        },
-        Example2 {
-            field_b: 1008,
-            ..Default::default()
-        },
-    ));
+fn setup(mut commands: Commands) {
+    commands.spawn(Player {
+        name: "Killgore".to_string(),
+        character_class: CharacterClass::Warrior,
+        health: 100.0,
+        ..default()
+    });
+
+    commands.spawn(Camera2d);
+    commands.spawn(Text::default());
 }
 
 // This is #[hot] because new versions of hot patched components need
 // to be registered so their reflected type data are available
+
 #[hot(rerun_on_hot_patch = true)]
 fn register_components(registry: Res<AppTypeRegistry>) {
     let mut registry = registry.write();
-    registry.register::<Example>();
-    registry.register::<Example2>();
+    registry.register::<Player>();
 }
 
 // Try changing the components below at runtime:
@@ -50,18 +39,22 @@ fn register_components(registry: Res<AppTypeRegistry>) {
 
 #[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
 #[reflect(Component, Default, HotPatchMigrate)]
-struct Example {
-    field_a: usize,
+struct Player {
+    name: String,
+    character_class: CharacterClass,
+    health: f32,
+    mana: f32,
 }
 
-#[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
-#[reflect(Component, Default, HotPatchMigrate)]
-struct Example2 {
-    field_b: usize,
+#[derive(Default, Debug, Reflect)]
+enum CharacterClass {
+    #[default]
+    Warrior,
+    Mage,
+    Archer,
 }
 
 #[hot]
-fn print_components(q: Query<(&Example, &Example2)>) {
-    let components: Vec<_> = q.iter().collect();
-    info_once!("{components:?}");
+fn print_components(player: Single<&Player>, mut text: Single<&mut Text>) {
+    text.0 = format!("Player: {:#?}", player.into_inner());
 }
