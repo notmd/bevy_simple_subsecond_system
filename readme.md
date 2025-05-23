@@ -236,6 +236,10 @@ dx serve --hot-patch --example rerun_setup
 - Only functions that exist when the app is launched are considered while hotpatching. This means that if you have a system `A` that calls a function `B`, 
   changing `B` will only work at runtime if that function existed already when the app was launched.
 - Does nothing on Wasm. This is not a technical limitation, just something we didn't implement yet.
+- Annotating a function relying on local state will clear it every frame. Notably, this means you should not use `#[hot]` on a system that uses any of the following:
+  - `EventReader`
+  - `Local`
+  - Queries filtering with `Added`, `Changed`, or `Spawned`
 
 ## Compatibility
 
