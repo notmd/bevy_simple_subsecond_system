@@ -11,8 +11,7 @@ fn main() {
 // You can change the signature of this system at runtime.
 // Try running the app and then uncommenting the lines below!
 #[hot(hot_patch_signature = true)]
-fn greet(// time: Res<Time>
-) {
+fn greet(/* time: Res<Time> */) {
     info_once!(
         "Hello from a hotpatched system! Try changing this string while the app is running!"
     );
