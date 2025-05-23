@@ -4,15 +4,10 @@
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy_app::{
-    App, NonSendMarker, Plugin, PostStartup, PostUpdate, PreStartup, PreUpdate, Startup, Update,
-};
-use bevy_derive::{Deref, DerefMut};
+use bevy_app::{App, Plugin, PreUpdate};
+use bevy_ecs::prelude::*;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use bevy_ecs::system::{Commands, Res};
-use bevy_ecs::{prelude::*, schedule::ScheduleLabel};
-use bevy_log::{debug, error};
-use bevy_platform::collections::HashSet;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
