@@ -9,6 +9,6 @@ fn main() {
 }
 
 #[hot]
-fn greet() {
+fn greet(mut commands: Commands) {
     info_once!("Hello from a hotpatched system! Try changing this string while the app is running!")
 }
