@@ -106,11 +106,13 @@ pub mod __macros_internal {
 
 #[derive(Deref, DerefMut)]
 pub struct HotPatchedApp(send_wrapper::SendWrapper<bevy::app::App>);
-impl HotPatchedApp {
-    pub fn new() -> HotPatchedApp {
+
+impl Default for HotPatchedApp {
+    fn default() -> Self {
         HotPatchedApp(send_wrapper::SendWrapper::new(bevy::app::App::default()))
     }
 }
+
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct HotPatchUpdate;
 
@@ -128,10 +130,10 @@ impl HotPatchedAppExt for App {
         mut func: impl FnMut(HotPatchedApp) -> HotPatchedApp + Send + Sync + 'static,
     ) -> &mut App {
         // we run this once during startup here so that way when we are actually restarting the app all the systems get added
-        let mut reload_app = func(HotPatchedApp::new());
+        let mut reload_app = func(HotPatchedApp::default());
         if let Some(mut schedules) = reload_app.world_mut().get_resource_mut::<Schedules>() {
             if let Some(mut update) = schedules.remove(Update) {
-                let mut hot_reload_update = schedules.entry(HotPatchUpdate);
+                let hot_reload_update = schedules.entry(HotPatchUpdate);
                 *hot_reload_update.graph_mut() = std::mem::take(update.graph_mut());
                 hot_reload_update.initialize(self.world_mut()).unwrap();
             }
@@ -139,7 +141,7 @@ impl HotPatchedAppExt for App {
         self.add_systems(Update, |world: &mut World| {
             let _ = world.try_run_schedule(HotPatchUpdate);
         });
-        let mut reloadable_section =
+        let reloadable_section =
             std::sync::Mutex::new(dioxus_devtools::subsecond::HotFn::current(func));
         self.add_systems(
             PostUpdate,
@@ -153,7 +155,7 @@ impl HotPatchedAppExt for App {
                 let mut reload_app = reloadable_section
                     .lock()
                     .unwrap()
-                    .try_call((HotPatchedApp::new(),))
+                    .try_call((HotPatchedApp::default(),))
                     .unwrap();
                 let Some(mut reload_schedules) =
                     reload_app.world_mut().get_resource_mut::<Schedules>()
@@ -165,7 +167,7 @@ impl HotPatchedAppExt for App {
                     return;
                 };
                 schedules.remove(HotPatchUpdate);
-                let mut hot_reload_update = schedules.entry(HotPatchUpdate);
+                let hot_reload_update = schedules.entry(HotPatchUpdate);
                 *hot_reload_update.graph_mut() = std::mem::take(reload_update.graph_mut());
                 commands.run_system_cached(|world: &mut World| {
                     world.schedule_scope(HotPatchUpdate, |world, hot_reload_update| {
