@@ -78,13 +78,22 @@ impl<T: HotPatchMigrate> FromType<T> for ReflectHotPatchMigrate {
 #[derive(Resource, Default, Deref, DerefMut)]
 pub(crate) struct ComponentMigrations(TypeIdMap<Arc<dyn Fn() -> TypeId + Sync + Send + 'static>>);
 
-pub(crate) fn migrate(world: &mut World) {
-    if let Err(err) = world.run_system_cached(register_migratable_components) {
-        warn!(
-            "Error when registerating components to migrate. Some components might not have been migrated. Error: '{err}'"
-        );
-    };
+pub(crate) fn register_migratable_components(
+    mut migrations: ResMut<ComponentMigrations>,
+    registry: Res<AppTypeRegistry>,
+) {
+    for registration in registry.read().iter() {
+        let Some(current_type_id) = registration.data::<ReflectHotPatchMigrate>() else {
+            continue;
+        };
 
+        migrations
+            .entry(registration.type_id())
+            .or_insert_with(|| current_type_id.clone().0);
+    }
+}
+
+pub(crate) fn migrate(world: &mut World) {
     let migrations = world.resource::<ComponentMigrations>();
     let changed: Vec<_> = migrations
         .iter()
@@ -99,21 +108,6 @@ pub(crate) fn migrate(world: &mut World) {
     // Track hot patches to the new struct
     let mut migrations = world.resource_mut::<ComponentMigrations>();
     migrations.extend(changed.into_iter().map(|(_, current)| (current(), current)));
-}
-
-fn register_migratable_components(
-    mut migrations: ResMut<ComponentMigrations>,
-    registry: Res<AppTypeRegistry>,
-) {
-    for registration in registry.read().iter() {
-        let Some(current_type_id) = registration.data::<ReflectHotPatchMigrate>() else {
-            continue;
-        };
-
-        migrations
-            .entry(registration.type_id())
-            .or_insert_with(|| current_type_id.clone().0);
-    }
 }
 
 fn migrate_component(world: &mut World, prev: TypeId, to: TypeId) {

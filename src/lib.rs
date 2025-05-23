@@ -6,7 +6,7 @@ pub mod migration;
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy_app::{App, Plugin, PreUpdate};
+use bevy_app::{App, Plugin, PostStartup, PreUpdate};
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use bevy_ecs::system::{Commands, Res};
 use bevy_ecs::{
@@ -70,19 +70,21 @@ impl Plugin for SimpleSubsecondPlugin {
             app.init_resource::<HotPatchedSystems>();
             app.init_resource::<migration::ComponentMigrations>();
 
-            app.add_event::<HotPatched>().add_systems(
-                PreUpdate,
-                (
-                    update_system_ptr,
-                    move |mut events: EventWriter<HotPatched>, mut commands: Commands| {
-                        if receiver.try_recv().is_ok() {
-                            events.write_default();
-                            commands.run_system_cached(migration::migrate);
-                        }
-                    },
+            app.add_event::<HotPatched>()
+                .add_systems(
+                    PreUpdate,
+                    (
+                        update_system_ptr,
+                        move |mut events: EventWriter<HotPatched>, mut commands: Commands| {
+                            if receiver.try_recv().is_ok() {
+                                events.write_default();
+                                commands.run_system_cached(migration::migrate);
+                            }
+                        },
+                    )
+                        .chain(),
                 )
-                    .chain(),
-            );
+                .add_systems(PostStartup, migration::register_migratable_components);
         }
     }
 }
