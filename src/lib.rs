@@ -135,7 +135,11 @@ impl HotPatchedAppExt for App {
             if let Some(mut update) = schedules.remove(Update) {
                 let hot_reload_update = schedules.entry(HotPatchUpdate);
                 *hot_reload_update.graph_mut() = std::mem::take(update.graph_mut());
-                hot_reload_update.initialize(self.world_mut()).unwrap();
+                let result = hot_reload_update.initialize(self.world_mut());
+                if let Err(e) = result {
+                    error!("Failed to initialize hotpatch update: {e}");
+                    return self;
+                }
             }
         }
         self.add_systems(Update, |world: &mut World| {
@@ -152,11 +156,17 @@ impl HotPatchedAppExt for App {
                 if hotreload_event.is_empty() {
                     return;
                 }
-                let mut reload_app = reloadable_section
+                let reload_app = reloadable_section
                     .lock()
                     .unwrap()
-                    .try_call((HotPatchedApp::default(),))
-                    .unwrap();
+                    .try_call((HotPatchedApp::default(),));
+                let mut reload_app = match reload_app {
+                    Ok(reload_app) => reload_app,
+                    Err(e) => {
+                        error!("Failed to call hotpatch function: {e:?}");
+                        return;
+                    }
+                };
                 let Some(mut reload_schedules) =
                     reload_app.world_mut().get_resource_mut::<Schedules>()
                 else {
@@ -171,7 +181,10 @@ impl HotPatchedAppExt for App {
                 *hot_reload_update.graph_mut() = std::mem::take(reload_update.graph_mut());
                 commands.run_system_cached(|world: &mut World| {
                     world.schedule_scope(HotPatchUpdate, |world, hot_reload_update| {
-                        hot_reload_update.initialize(world).unwrap();
+                        let result = hot_reload_update.initialize(world);
+                        if let Err(e) = result {
+                            error!("Failed to initialize hotpatch update: {e}");
+                        }
                     });
                 });
             },
