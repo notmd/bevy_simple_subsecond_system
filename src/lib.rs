@@ -4,9 +4,15 @@
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::platform::collections::HashSet;
-use bevy::prelude::*;
+use bevy_app::{
+    App, NonSendMarker, Plugin, PostStartup, PostUpdate, PreStartup, PreUpdate, Startup, Update,
+};
+use bevy_derive::{Deref, DerefMut};
+#[cfg(all(not(target_family = "wasm"), debug_assertions))]
+use bevy_ecs::system::{Commands, Res};
+use bevy_ecs::{prelude::*, schedule::ScheduleLabel};
+use bevy_log::error;
+use bevy_platform::collections::HashSet;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
@@ -90,9 +96,14 @@ fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: 
 }
 #[doc(hidden)]
 pub mod __macros_internal {
+    pub use bevy_ecs::{
+        system::{IntoSystem, SystemId, SystemState},
+        world::World,
+    };
+    pub use bevy_ecs_macros::Resource;
+    pub use bevy_log::debug;
+    use bevy_platform::collections::HashMap;
     use std::any::TypeId;
-
-    use bevy::{ecs::system::SystemId, platform::collections::HashMap, prelude::*};
 
     #[derive(Resource, Default)]
     pub struct __HotPatchedSystems(pub HashMap<TypeId, __HotPatchedSystem>);
@@ -107,11 +118,11 @@ pub mod __macros_internal {
 
 /// Wrapper around [`App`] used by [`HotPatchedAppExt::with_hot_patch`], which allows you to add and remove systems at runtime.
 #[derive(Deref, DerefMut)]
-struct HotPatchedApp(send_wrapper::SendWrapper<bevy::app::App>);
+struct HotPatchedApp(send_wrapper::SendWrapper<App>);
 
 impl Default for HotPatchedApp {
     fn default() -> Self {
-        HotPatchedApp(send_wrapper::SendWrapper::new(bevy::app::App::default()))
+        HotPatchedApp(send_wrapper::SendWrapper::new(App::default()))
     }
 }
 
@@ -330,7 +341,7 @@ impl HotPatchedAppExt for App {
                                     }
                                     if location.line() > *line_start && location.line() < *line_end
                                     {
-                                        println!("despawning the thing at: {:?}", location);
+                                        println!("despawning the thing at: {location:?}");
                                         commands.entity(e.entity()).despawn();
                                     }
                                 }

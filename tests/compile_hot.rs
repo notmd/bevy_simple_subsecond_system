@@ -142,7 +142,7 @@ fn system_with_generic_and_exclusive<T: Component>(world: &World) {}
 #[hot]
 fn system_with_generic_static_and_exclusive<T: 'static>(world: &mut World) {}
 
-//#[hot]
+#[hot]
 fn system_with_generic_non_static_and_exclusive<T>(world: &mut World) {}
 
 #[hot]
@@ -157,7 +157,7 @@ fn save_to_previous<C: Component + Clone>(
 ) {
 }
 
-//#[hot]
+#[hot]
 fn apply_config<C: Config>(world: &mut World, mut cursor: Local<EventCursor<AssetEvent<C>>>) {}
 
 #[hot]
@@ -166,12 +166,12 @@ fn exclusive_mut(world: &mut World) {}
 #[hot]
 fn exclusive(world: &World) {}
 
-//#[hot]
+#[hot]
 fn force_loading_screen(config: ConfigRef<DevConfig>, screen: CurrentRef<Screen>) -> Progress {
     todo!()
 }
 
-//#[hot]
+#[hot]
 fn wait_in_screen(duration: f32) -> ScheduleConfigs<ScheduleSystem> {
     (move |screen_time: Res<Time>| ()).into_configs()
 }
