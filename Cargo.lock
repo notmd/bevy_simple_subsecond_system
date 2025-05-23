@@ -1058,6 +1058,11 @@ name = "bevy_simple_subsecond_system"
 version = "0.1.9"
 dependencies = [
  "bevy",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_ecs_macros",
+ "bevy_log",
+ "bevy_platform",
  "bevy_simple_subsecond_system_macros",
  "crossbeam-channel",
  "dioxus-devtools",
