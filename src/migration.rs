@@ -3,6 +3,8 @@
 //! Implement [`Reflect`], [`HotPatchMigrate`], [`Default`] and [`Component`]
 //! and reflect them for the component you want to migrate.
 //! ```
+//! # use bevy_simple_subsecond_system::prelude::*;
+//! # use bevy::prelude::*;
 //! #[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
 //! #[reflect(Component, Default, HotPatchMigrate)]
 //! struct Example {
@@ -13,6 +15,8 @@
 //! Additionally you will need to register these components and their
 //! new, hot patched versions. This can be done in a startup system like this:
 //! ```
+//! # use bevy_simple_subsecond_system::prelude::*;
+//! # use bevy::prelude::*;
 //! // When creating the app:
 //! // app.add_systems(Startup, register_components)
 //!
@@ -48,6 +52,8 @@ use core::any::{Any, TypeId};
 /// should be reflected.
 ///
 /// ```
+/// # use bevy_simple_subsecond_system::prelude::*;
+/// # use bevy::prelude::*;
 /// #[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
 /// #[reflect(Component, Default, HotPatchMigrate)]
 /// struct Example {
@@ -63,8 +69,8 @@ pub trait HotPatchMigrate: Any + Component + Reflect + Default {
     fn current_type_id() -> TypeId;
 }
 
-/// `TypeData` corresponding to the `HotPatchMigrate` trait. It contains the
-/// `HotPatchMigrate::current_type_id` method. You don't need to use this
+/// [`TypeData`] corresponding to the [`HotPatchMigrate`] trait. It contains the
+/// [`HotPatchMigrate::current_type_id`] method. You don't need to use this
 /// directly for hot patching or struct migration.
 #[derive(Clone)]
 pub struct ReflectHotPatchMigrate(pub Arc<dyn Fn() -> TypeId + Sync + Send + 'static>);
