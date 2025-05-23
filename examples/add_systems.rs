@@ -7,7 +7,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
         // try adding and removing systems from here! make whole new ones!
-        .with_hot_patch(|app: &mut App| {
+        .add_hot_plugin(|app: &mut App| {
             // this one won't hotpatch and rerun
             app.add_systems(Startup, setup);
             // this will hot-patch without the #[hot] macro

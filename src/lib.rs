@@ -167,11 +167,11 @@ pub trait HotPatchedAppExt {
     ///     info!("Goodbye, world!");
     /// }
     /// ```
-    fn with_hot_patch(&mut self, func: impl FnMut(&mut App) + Send + Sync + 'static) -> &mut App;
+    fn add_hot_plugin(&mut self, func: impl FnMut(&mut App) + Send + Sync + 'static) -> &mut App;
 }
 
 impl HotPatchedAppExt for App {
-    fn with_hot_patch(
+    fn add_hot_plugin(
         &mut self,
         mut func: impl FnMut(&mut App) + Send + Sync + 'static,
     ) -> &mut App {
