@@ -220,6 +220,7 @@ dx serve --hot-patch --example rerun_setup
 - If your system calls other functions, you can also change those functions' code at runtime
 - Rerun setup systems automatically when changing them
 - Extremely small API: You only need the plugin struct and the `#[hot]` attribute
+- Automatically compiles itself out on release builds and when targetting Wasm. The `#[hot]` attribute does simply nothing on such builds.
 
 ## Known Limitations
 
@@ -234,6 +235,7 @@ dx serve --hot-patch --example rerun_setup
 - Some signatures are not supported, see the tests. Some have `#[hot]` commented out to indicate this
 - Only functions that exist when the app is launched are considered while hotpatching. This means that if you have a system `A` that calls a function `B`, 
   changing `B` will only work at runtime if that function existed already when the app was launched.
+- Does nothing on Wasm. This is not a technical limitation, just something we didn't implement yet.
 
 ## Compatibility
 
