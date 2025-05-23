@@ -10,7 +10,7 @@ use bevy_platform::collections::HashSet;
 
 use crate::HotPatched;
 
-/// Wrapper around [`App`](bevy_ecs::prelude::App) used by [`HotPatchedAppExt::with_hot_patch`], which allows you to add and remove systems at runtime.
+/// Wrapper around [`App`] used by [`HotPatchedAppExt::with_hot_patch`], which allows you to add and remove systems at runtime.
 #[derive(Deref, DerefMut)]
 struct HotPatchedApp(send_wrapper::SendWrapper<App>);
 
@@ -23,6 +23,8 @@ impl Default for HotPatchedApp {
 #[derive(Deref, DerefMut, Resource, Default, Debug)]
 pub struct ReloadPositions(pub HashSet<(&'static str, u32, u32)>);
 
+/// The [`Startup`] schedule, but rerun on hot-reload.
+/// Only valid inside the context of [`HotPatchedAppExt::with_hot_patch`].
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct StartupRerunHotPatch;
 
