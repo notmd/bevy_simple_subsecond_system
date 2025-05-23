@@ -4,11 +4,23 @@
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy::prelude::*;
+use bevy_app::{App, Plugin, PreUpdate};
+#[cfg(all(not(target_family = "wasm"), debug_assertions))]
+use bevy_ecs::system::{Commands, Res};
+use bevy_ecs::{
+    event::{Event, EventWriter},
+    schedule::IntoScheduleConfigs,
+};
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use dioxus_devtools::{subsecond::apply_patch, *};
+
+/// Reexports of bevy crates for macro usage
+pub mod reexports {
+    pub use bevy_ecs;
+    pub use bevy_log;
+}
 
 /// Everything you need to use hotpatching
 pub mod prelude {
@@ -88,9 +100,10 @@ fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: 
 }
 #[doc(hidden)]
 pub mod __macros_internal {
+    use bevy_ecs::system::SystemId;
+    use bevy_ecs_macros::Resource;
+    use bevy_platform::collections::HashMap;
     use std::any::TypeId;
-
-    use bevy::{ecs::system::SystemId, platform::collections::HashMap, prelude::*};
 
     #[derive(Resource, Default)]
     pub struct __HotPatchedSystems(pub HashMap<TypeId, __HotPatchedSystem>);
