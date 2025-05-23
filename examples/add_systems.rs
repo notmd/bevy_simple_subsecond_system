@@ -14,13 +14,13 @@ fn main() {
             // you can change the function signature, and add and remove systems like this at will!
             app.add_systems(Update, do_thing);
             app.add_systems(PostUpdate, do_second_thing);
-            // add and remove these! Needs the #[hot] macro to auto-despawn entities spawned in it!
+            // add and remove these! Needs the #[hot(hot_patch_signature = true)] macro to auto-despawn entities spawned in it!
             app.add_systems(StartupRerunHotPatch, spawn_ui);
         })
         .run();
 }
 
-#[hot]
+#[hot(hot_patch_signature = true)]
 fn spawn_ui(mut commands: Commands, mut res: ResMut<ReloadPositions>) {
     commands.queue(|world: &mut World| {
         // Currently bevy forgets to do `track_caller` on `commands.spawn` so to
