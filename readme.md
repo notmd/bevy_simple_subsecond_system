@@ -60,24 +60,15 @@ cargo install cargo-binstall
 ```
 </details>
 
-Now, we need to install the Dioxus CLI of the newest alpha build:
-
-<details><summary>Windows</summary>
-
-```sh
-cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus/ --branch jk/fix-dyn-link-subsecond
-```
-
-</details>
-
-<details><summary>Non-Windows</summary>
-
+Now, we need to install the Dioxus CLI of the newest alpha build.
 ```sh
 cargo binstall dioxus-cli@0.7.0-alpha.0
 ```
 
-</details>
-<br/>
+Windows users need to install from a specific branch for now:
+```sh
+cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus/ --branch jk/fix-dyn-link-subsecond
+```
 
 Then make sure you're not using [LD as your linker](https://github.com/DioxusLabs/dioxus/issues/4144).
 Click your OS below on instructions for how to do this
@@ -141,45 +132,8 @@ Add the crate to your dependencies:
 ```sh
 cargo add bevy_simple_subsecond_system
 ```
-Then add the plugin to your app:
 
-```rust,ignore
-use bevy::prelude::*;
-use bevy_simple_subsecond_system::prelude::*;
-
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugins(SimpleSubsecondPlugin::default())
-        // rest of the setup
-        .run();
-}
-
-```
-
-Now you can annotate your systems with `#[hot]` to enable hotpatching for them:
-
-```rust,ignore
-use bevy_simple_subsecond_system::prelude::*;
-
-#[hot]
-fn greet() {
-    info!("Hello from a hotpatched system! Try changing this string while the app is running!")
-}
-```
-Note that `greet` is a regular Bevy system, so use whatever parameters you'd like.
-
-After adding the system to your app, run it with
-
-```sh
-dx serve --hot-patch
-```
-
-Now try changing the string and saving the file *while the app is running*. If all goes well, it should print your new string!
-
-
-<details>
-<summary>Full code</summary>
+Then add the plugin to your app and annotate any system you want with `#[hot]`:
 
 ```rust,ignore
 use bevy::prelude::*;
@@ -199,8 +153,11 @@ fn greet() {
 }
 ```
 
-</details>
+Now run your app with
 
+```sh
+dx serve --hot-patch
+```
 
 ## Examples
 
