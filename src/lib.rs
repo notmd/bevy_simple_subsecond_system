@@ -43,9 +43,16 @@ pub struct SimpleSubsecondPlugin;
 
 impl Plugin for SimpleSubsecondPlugin {
     fn build(&self, app: &mut App) {
+        app.configure_sets(
+            PreUpdate,
+            (
+                SimpleSubsecondSystemSet::UpdateFunctionPtrs,
+                SimpleSubsecondSystemSet::ComponentMigrations,
+            )
+                .chain(),
+        );
         #[cfg(target_family = "wasm")]
         {
-            let _ = app;
             warn!("Hotpatching is not supported on Wasm yet. Disabling SimpleSubsecondPlugin.");
             return;
         }
@@ -82,7 +89,7 @@ impl Plugin for SimpleSubsecondPlugin {
             app.add_systems(PostStartup, migration::register_migratable_components)
                 .add_systems(
                     PreUpdate,
-                    migration::migrate.in_set(migration::MigrateComponentsSet),
+                    migration::migrate.in_set(SimpleSubsecondSystemSet::ComponentMigrations),
                 );
         }
     }
@@ -91,6 +98,17 @@ impl Plugin for SimpleSubsecondPlugin {
 /// Event sent when the hotpatch is applied.
 #[derive(Event, Default)]
 pub struct HotPatched;
+
+/// System set in which components are migrated after a hot patch.
+/// Belongs to the [`PreUpdate`] schedule.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SimpleSubsecondSystemSet {
+    /// Update the pointers to the current function definitions.
+    /// Systems with `#[hot(rerun_on_hot_patch = true)]` will be rerun here.
+    UpdateFunctionPtrs,
+    /// Migrate components that derive `HotPatchMigrate` that were changed at runtime.
+    ComponentMigrations,
+}
 
 #[doc(hidden)]
 pub mod __macros_internal {

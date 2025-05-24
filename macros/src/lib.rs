@@ -242,7 +242,11 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                     // TODO: we simply ignore the `Result` here, but we should be propagating it
                     let _ = {#maybe_run_call};
                 };
-                world.resource_mut::<::bevy_simple_subsecond_system::__macros_internal::Schedules>().add_systems(::bevy_simple_subsecond_system::__macros_internal::PreUpdate, system.before(::bevy_simple_subsecond_system::migration::MigrateComponentsSet));
+                world.resource_mut::<::bevy_simple_subsecond_system::__macros_internal::Schedules>()
+                  .add_systems(
+                    ::bevy_simple_subsecond_system::__macros_internal::PreUpdate,
+                    system.in_set(::bevy_simple_subsecond_system::SimpleSubsecondSystemSet::UpdateFunctionPtrs)
+                );
                 let system = ::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     current_ptr: hot_fn_ptr,
                     last_ptr: hot_fn_ptr,
