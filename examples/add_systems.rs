@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::prelude::*;
 
 fn main() {
@@ -7,14 +7,16 @@ fn main() {
         .add_plugins(SimpleSubsecondPlugin::default())
         // try adding and removing systems from here! make whole new ones!
         .with_hot_patch(|app: &mut App| {
-            // this one won't hotpatch and rerun
-            app.add_systems(Startup, setup);
-            // this will hot-patch without the #[hot] macro
-            // you can change the function signature, and add and remove systems like this at will!
-            app.add_systems(Update, do_thing);
-            app.add_systems(PostUpdate, do_second_thing);
-            // add and remove these! Needs the #[hot(hot_patch_signature = true)] macro to auto-despawn entities spawned in it!
+            // StartupRerunHotPatch is like Startup, but will rerun on hot-reload.
+            // You need the #[hot(hot_patch_signature = true)] macro to auto-despawn entities spawned in it!
             app.add_systems(StartupRerunHotPatch, spawn_ui);
+            // All other systems do not require `#[hot]`.
+            // Try writing, adding, and removing new ones here at runtime!
+            app.add_systems(Update, print_hello);
+            app.add_systems(
+                Update,
+                change_text.run_if(input_just_pressed(KeyCode::Space)),
+            );
         })
         .run();
 }
@@ -37,28 +39,27 @@ fn spawn_ui(mut commands: Commands) {
                 row_gap: Val::Px(20.0),
                 ..default()
             },
-            children![Text::new("Bevy is awesome"), Text::new("Try new thing"),],
+            children![
+                Text::new("Press space to change the text below:"),
+                (
+                    Text::new("(no button pressed yet, or this system was reset)"),
+                    InfoLabel
+                ),
+            ],
         ));
+        world.spawn(Camera2d);
     });
 }
 
-fn do_thing(res: ResMut<ButtonInput<KeyCode>>) {
-    if res.just_pressed(KeyCode::Space) {
-        println!("OwO");
-    }
-}
-
-fn do_second_thing(res: ResMut<ButtonInput<KeyCode>>) {
-    if res.just_pressed(KeyCode::Space) {
-        println!("UwU");
-    }
+fn print_hello() {
+    info_once!("Hello, world!");
 }
 
 #[derive(Component)]
-#[require(Node)]
-struct Ui;
+struct InfoLabel;
 
-fn setup(mut commands: Commands) {
-    commands.spawn(Ui);
-    commands.spawn(Camera2d);
+fn change_text(mut query: Query<&mut Text, With<InfoLabel>>, time: Res<Time>) {
+    for mut text in &mut query {
+        text.0 = format!("You pressed the space key at t = {} s", time.elapsed_secs());
+    }
 }
