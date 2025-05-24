@@ -14,7 +14,6 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn(Player {
         name: "Killgore".to_string(),
-        character_class: CharacterClass::Warrior,
         health: 100.0,
         ..default()
     });
@@ -32,7 +31,7 @@ fn register_components(registry: Res<AppTypeRegistry>) {
     registry.register::<Player>();
 }
 
-// Try changing the components below at runtime:
+// Try changing the component below at runtime:
 // - Rename them
 // - Add a field
 // - Remove a field
@@ -41,17 +40,8 @@ fn register_components(registry: Res<AppTypeRegistry>) {
 #[reflect(Component, Default, HotPatchMigrate)]
 struct Player {
     name: String,
-    character_class: CharacterClass,
     health: f32,
     mana: f32,
-}
-
-#[derive(Default, Debug, Reflect)]
-enum CharacterClass {
-    #[default]
-    Warrior,
-    Mage,
-    Archer,
 }
 
 #[hot]
