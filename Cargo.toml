@@ -18,14 +18,16 @@ categories = ["game-development"]
 bevy_ecs = { version = "0.16.0" }
 bevy_log = { version = "0.16.0" }
 bevy_app = { version = "0.16.0" }
+bevy_derive = { version = "0.16.0" }
 bevy_platform = { version = "0.16.0" }
 bevy_ecs_macros = { version = "0.16.0" }
+bevy_internal = { version = "0.16.0", features = ["track_location"] }
 dioxus-devtools = { version = "0.7.0-alpha.0" }
 bevy_simple_subsecond_system_macros = { path = "macros", version = "0.1.6" }
 crossbeam-channel = "0.5.15"
-
+send_wrapper = "0.6.0"
 [dev-dependencies]
-bevy = { version = "0.16.0", features = ["bevy_ui_debug"] }
+bevy = { version = "0.16.0", features = ["bevy_ui_debug", "track_location"] }
 
 [lints.clippy]
 # Bevy supplies arguments to systems via dependency injection, so it's natural for systems to

@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
+use syn::spanned::Spanned;
 use syn::{
     FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath, TypeReference,
     parse::{Parse, ParseStream},
@@ -69,6 +70,12 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Generate new identifiers
     let hotpatched_fn = format_ident!("__{}_hotpatched", original_fn_name);
     let original_wrapper_fn = format_ident!("__{}_original", original_fn_name);
+
+    let newlines = if let Some(source_text) = block.span().unwrap().source_text() {
+        source_text.chars().filter(|ch| *ch == '\n').count() as u32
+    } else {
+        0
+    };
 
     // Capture parameter types, names, and mutability
     let mut param_types = Vec::new();
@@ -166,11 +173,17 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let hotpatched_fn_definition = match has_single_world_param(sig) {
         WorldParam::Mut | WorldParam::Ref => quote! {
             #vis fn #hotpatched_fn #impl_generics(world: &mut ::bevy_simple_subsecond_system::__macros_internal::World) #where_clause #original_output {
+                if let Some(mut reload_positions) = world.get_resource_mut::<::bevy_simple_subsecond_system::__macros_internal::__ReloadPositions>() {
+                    reload_positions.insert((file!(), line!(), line!() + #newlines));
+                }
                 #original_wrapper_fn #maybe_generics(world)
             }
         },
         WorldParam::None => quote! {
             #vis fn #hotpatched_fn #impl_generics(world: &mut ::bevy_simple_subsecond_system::__macros_internal::World) #where_clause #original_output {
+                if let Some(mut reload_positions) = world.get_resource_mut::<::bevy_simple_subsecond_system::__macros_internal::__ReloadPositions>() {
+                    reload_positions.insert((file!(), line!(), line!() + #newlines));
+                }
                 use ::bevy_simple_subsecond_system::__macros_internal::SystemState;
                 let mut __system_state: SystemState<(#(#param_types),*)> = SystemState::new(world);
                 let __unsafe_world = world.as_unsafe_world_cell_readonly();

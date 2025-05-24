@@ -1059,13 +1059,16 @@ version = "0.1.10"
 dependencies = [
  "bevy",
  "bevy_app",
+ "bevy_derive",
  "bevy_ecs",
  "bevy_ecs_macros",
+ "bevy_internal",
  "bevy_log",
  "bevy_platform",
  "bevy_simple_subsecond_system_macros",
  "crossbeam-channel",
  "dioxus-devtools",
+ "send_wrapper",
 ]
 
 [[package]]
