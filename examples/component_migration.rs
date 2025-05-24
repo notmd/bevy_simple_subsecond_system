@@ -44,7 +44,7 @@ struct Player {
     mana: f32,
 }
 
-#[hot]
+#[hot(hot_patch_signature = true)]
 fn print_components(player: Single<&Player>, mut text: Single<&mut Text>) {
     text.0 = format!("Player: {:#?}", player.into_inner());
 }
