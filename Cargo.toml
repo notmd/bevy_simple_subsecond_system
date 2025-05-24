@@ -21,6 +21,8 @@ bevy_app = { version = "0.16.0" }
 bevy_derive = { version = "0.16.0" }
 bevy_platform = { version = "0.16.0" }
 bevy_ecs_macros = { version = "0.16.0" }
+bevy_reflect = { version = "0.16.0" }
+bevy_utils = { version = "0.16.0" }
 bevy_internal = { version = "0.16.0", features = ["track_location"] }
 dioxus-devtools = { version = "0.7.0-alpha.0" }
 bevy_simple_subsecond_system_macros = { path = "macros", version = "0.1.7" }

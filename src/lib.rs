@@ -2,9 +2,11 @@
 #![allow(clippy::type_complexity)]
 #![doc = include_str!("../readme.md")]
 
+pub mod migration;
+
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy_app::{App, Last, Plugin};
+use bevy_app::{App, Last, Plugin, PostStartup, PreUpdate};
 use bevy_ecs::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
@@ -19,6 +21,7 @@ pub mod prelude {
         HotPatched, SimpleSubsecondPlugin,
         hot_patched_app::{HotPatchedAppExt as _, StartupRerunHotPatch},
     };
+    pub use crate::migration::*;
     pub use bevy_simple_subsecond_system_macros::*;
 }
 
@@ -74,6 +77,13 @@ impl Plugin for SimpleSubsecondPlugin {
                     }
                 },
             );
+
+            app.init_resource::<migration::ComponentMigrations>();
+            app.add_systems(PostStartup, migration::register_migratable_components)
+                .add_systems(
+                    PreUpdate,
+                    migration::migrate.in_set(migration::MigrateComponentsSet),
+                );
         }
     }
 }

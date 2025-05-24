@@ -230,7 +230,7 @@ This allows you to e.g. add additional `Query` or `Res` parameters or modify exi
 - Only functions that exist when the app is launched are considered while hotpatching. This means that if you have a system `A` that calls a function `B`, 
   changing `B` will only work at runtime if that function existed already when the app was launched.
 - Does nothing on Wasm. This is not a technical limitation, just something we didn't implement yet.
-
+- While top level component definitions can be changed and renamed (and will be migrated if using `HotPatchMigrate`), changing definitions of the types used as fields of the components isn't supported. It might work in some cases but most probably will be an undefined behaviour.
 
 ## Compatibility
 

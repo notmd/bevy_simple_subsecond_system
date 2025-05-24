@@ -1,9 +1,14 @@
+//! Implements the Bevy Simple Subsecond System derives.
+#![warn(missing_docs)]
+
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::spanned::Spanned;
 use syn::{
-    FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath, TypeReference,
+    DeriveInput, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, ReturnType, Token, Type, TypePath,
+    TypeReference,
     parse::{Parse, ParseStream},
+    parse_macro_input,
 };
 
 struct HotArgs {
@@ -42,6 +47,7 @@ impl Parse for HotArgs {
     }
 }
 
+/// Annotate your systems with `#[hot]` to enable hotpatching for them.
 #[proc_macro_attribute]
 pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the attribute as a Meta
@@ -221,7 +227,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
             let contains_system = world.get_resource::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
             if !contains_system {
                 let hot_fn_ptr = #hot_fn.ptr_address();
-                world.resource_mut::<::bevy_simple_subsecond_system::__macros_internal::Schedules>().add_systems(::bevy_simple_subsecond_system::__macros_internal::PreUpdate, move |world: &mut ::bevy_simple_subsecond_system::__macros_internal::World| {
+                let system = move |world: &mut ::bevy_simple_subsecond_system::__macros_internal::World| {
                     let needs_update = {
                         let mut hot_patched_systems = world.get_resource_mut::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
                         let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
@@ -235,7 +241,8 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                     }
                     // TODO: we simply ignore the `Result` here, but we should be propagating it
                     let _ = {#maybe_run_call};
-                });
+                };
+                world.resource_mut::<::bevy_simple_subsecond_system::__macros_internal::Schedules>().add_systems(::bevy_simple_subsecond_system::__macros_internal::PreUpdate, system.before(::bevy_simple_subsecond_system::migration::MigrateComponentsSet));
                 let system = ::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     current_ptr: hot_fn_ptr,
                     last_ptr: hot_fn_ptr,
@@ -345,4 +352,23 @@ fn is_result_unit(output: &ReturnType) -> bool {
             _ => false,
         },
     }
+}
+
+/// Derive `HotPatchMigrate` and reflect it for your struct to be migrated
+/// when a hot patch happens. You will also need to implement/derive and
+/// reflect `Component` and `Default`.
+#[proc_macro_derive(HotPatchMigrate)]
+pub fn derive_hot_patch_migrate(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        impl ::bevy_simple_subsecond_system::migration::HotPatchMigrate for #name {
+            fn current_type_id() -> ::core::any::TypeId {
+                ::bevy_simple_subsecond_system::dioxus_devtools::subsecond::HotFn::current(|| ::core::any::TypeId::of::<Self>()).call(())
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
 }
