@@ -6,21 +6,21 @@ pub mod migration;
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy_app::{App, Plugin, PostStartup, PreUpdate};
-#[cfg(all(not(target_family = "wasm"), debug_assertions))]
-use bevy_ecs::system::{Commands, Res};
-use bevy_ecs::{
-    event::{Event, EventWriter},
-    schedule::IntoScheduleConfigs,
-};
+use bevy_app::{App, Last, Plugin, PostStartup};
+use bevy_ecs::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use dioxus_devtools::{subsecond::apply_patch, *};
 
+pub mod hot_patched_app;
+
 /// Everything you need to use hotpatching
 pub mod prelude {
-    pub use super::{HotPatched, SimpleSubsecondPlugin};
+    pub use super::{
+        HotPatched, SimpleSubsecondPlugin,
+        hot_patched_app::{HotPatchedAppExt as _, StartupRerunHotPatch},
+    };
     pub use crate::migration::*;
     pub use bevy_simple_subsecond_system_macros::*;
 }
@@ -71,19 +71,12 @@ impl Plugin for SimpleSubsecondPlugin {
             app.init_resource::<migration::ComponentMigrations>();
 
             app.add_event::<HotPatched>()
-                .add_systems(
-                    PreUpdate,
-                    (
-                        update_system_ptr,
-                        move |mut events: EventWriter<HotPatched>, mut commands: Commands| {
-                            if receiver.try_recv().is_ok() {
-                                events.write_default();
-                                commands.run_system_cached(migration::migrate);
-                            }
-                        },
-                    )
-                        .chain(),
-                )
+                .add_systems(Last, move |mut events: EventWriter<HotPatched>| {
+                    if receiver.try_recv().is_ok() {
+                        events.write_default();
+                        commands.run_system_cached(migration::migrate);
+                    }
+                })
                 .add_systems(PostStartup, migration::register_migratable_components);
         }
     }
@@ -93,21 +86,18 @@ impl Plugin for SimpleSubsecondPlugin {
 #[derive(Event, Default)]
 pub struct HotPatched;
 
-#[cfg(all(not(target_family = "wasm"), debug_assertions))]
-fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: Commands) {
-    for system in hot_patched_systems.0.values() {
-        commands.run_system(system.system_ptr_update_id);
-    }
-}
 #[doc(hidden)]
 pub mod __macros_internal {
+    pub use bevy_app::PreUpdate;
+    use bevy_derive::{Deref, DerefMut};
     pub use bevy_ecs::{
+        schedule::Schedules,
         system::{IntoSystem, SystemId, SystemState},
         world::World,
     };
     pub use bevy_ecs_macros::Resource;
     pub use bevy_log::debug;
-    use bevy_platform::collections::HashMap;
+    use bevy_platform::collections::{HashMap, HashSet};
     use std::any::TypeId;
 
     #[derive(Resource, Default)]
@@ -115,8 +105,11 @@ pub mod __macros_internal {
 
     #[doc(hidden)]
     pub struct __HotPatchedSystem {
-        pub system_ptr_update_id: SystemId,
         pub current_ptr: u64,
         pub last_ptr: u64,
     }
+
+    #[doc(hidden)]
+    #[derive(Deref, DerefMut, Resource, Default, Debug)]
+    pub struct __ReloadPositions(pub HashSet<(&'static str, u32, u32)>);
 }

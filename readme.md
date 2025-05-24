@@ -10,9 +10,6 @@ This is a intermediate solution you can use until [Bevy has implement this featu
 Powered by [Dioxus' subsecond](https://github.com/DioxusLabs/dioxus/releases/tag/v0.7.0-alpha.0#rust-hot-patching)  
 Please report all hotpatch-related problems to them :)
 
-> ⚠️ *Should* work on Windows *somehow*, but I haven't yet figured out how! Let me know if you made it!
-
-
 
 <https://github.com/user-attachments/assets/a44e446b-b2bb-4e10-81c3-3f20cccadea0>
 
@@ -63,11 +60,15 @@ cargo install cargo-binstall
 ```
 </details>
 
-Now, we need to install the Dioxus CLI of the newest alpha build:
+Now, we need to install the Dioxus CLI of the newest alpha build.
 ```sh
 cargo binstall dioxus-cli@0.7.0-alpha.0
 ```
 
+Windows users need to install from a specific branch for now:
+```sh
+cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus/ --branch jk/fix-dyn-link-subsecond
+```
 
 Then make sure you're not using [LD as your linker](https://github.com/DioxusLabs/dioxus/issues/4144).
 Click your OS below on instructions for how to do this
@@ -79,12 +80,7 @@ Click your OS below on instructions for how to do this
 Windows
 </summary>
 
-Sorry friend, I didn't test this. All I know is that you can install `rust-lld.exe` by running
-
-```sh
-cargo binstall cargo-binutils
-rustup component add llvm-tools-preview
-```
+The linker should work out of the box, but there may be issues with path lengths.
 
 </details>
 
@@ -136,44 +132,8 @@ Add the crate to your dependencies:
 ```sh
 cargo add bevy_simple_subsecond_system
 ```
-Then add the plugin to your app:
 
-```rust,ignore
-use bevy::prelude::*;
-use bevy_simple_subsecond_system::prelude::*;
-
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugins(SimpleSubsecondPlugin::default())
-        // rest of the setup
-        .run();
-}
-
-```
-
-Now you can annotate your systems with `#[hot]` to enable hotpatching for them:
-
-```rust,ignore
-use bevy_simple_subsecond_system::prelude::*;
-
-#[hot]
-fn greet() {
-    info!("Hello from a hotpatched system! Try changing this string while the app is running!")
-}
-```
-Note that `greet` is a regular Bevy system, so use whatever parameters you'd like.
-
-After adding the system to your app, run it with
-
-```sh
-dx serve --hot-patch
-```
-
-Now try changing the string and saving the file *while the app is running*. If all goes well, it should print your new string!
-
-<details>
-<summary>Full code</summary>
+Then add the plugin to your app and annotate any system you want with `#[hot]`:
 
 ```rust,ignore
 use bevy::prelude::*;
@@ -193,13 +153,11 @@ fn greet() {
 }
 ```
 
-</details>
+Now run your app with
 
-## Setup Methods
-
-UI is often spawned in `Startup` or `OnEnter` schedules. Hot-patching such setup systems would be fairly useless, as they wouldn't run again.
-For this reason, the plugin supports automatically rerunning systems that have been hot-patched. To opt-in, replace `#[hot]` with `#[hot(rerun_on_hot_patch = true)]`.
-See the `rerun_setup` example for detailed instructions.
+```sh
+dx serve --hot-patch
+```
 
 ## Examples
 
@@ -212,6 +170,44 @@ e.g.
 ```sh
 dx serve --hot-patch --example rerun_setup
 ```
+
+
+
+## Advanced Usage
+There are some more things you can hot-patch, but they come with extra caveats right now
+
+<details>
+<summary>Limitations when using these features</summary>
+
+- Annotating a function relying on local state will clear it every frame. Notably, this means you should not use `#[hot]` on a system that uses any of the following:
+  - `EventReader`
+  - `Local`
+  - Queries filtering with `Added`, `Changed`, or `Spawned`
+- Some signatures are not supported, see the tests. Some have `#[hot]` commented out to indicate this
+- All hotpatched systems run as exclusive systems, meaning they won't run in parallel
+</details>
+
+
+<details>
+<summary>
+<sig>Setup Methods</sig>
+</summary>
+
+UI is often spawned in `Startup` or `OnEnter` schedules. Hot-patching such setup systems would be fairly useless, as they wouldn't run again.
+For this reason, the plugin supports automatically rerunning systems that have been hot-patched. To opt-in, replace `#[hot]` with `#[hot(rerun_on_hot_patch = true)]`.
+See the `rerun_setup` example for detailed instructions.
+
+</details>
+
+<details>
+<summary>
+<sig>Change signatures at runtime</sig>
+</summary>
+
+Replace `#[hot]` with `#[hot(hot_patch_signature = true)]` to allow changing a system's signature at runtime.
+This allows you to e.g. add additional `Query` or `Res` parameters or modify existing ones.
+</details>
+
 
 ## Features
 
@@ -228,18 +224,13 @@ dx serve --hot-patch --example rerun_setup
 - Using this [breaks dynamic linking](https://github.com/DioxusLabs/dioxus/issues/4154)
 - A change in the definition of structs that appear in hot-patched systems at runtime will result in your query failing to match, as that new type does not exist in `World` yet.
   - Practically speaking, this means you should not change the definition of `Resource`s and `Component`s of your system at runtime
-- All hotpatched systems run as exclusive systems, meaning they won't run in parallel
 - Only [the topmost binary is hotpatched](https://github.com/DioxusLabs/dioxus/issues/4160), meaning your app is not allowed to have a `lib.rs` or a workspace setup.
 - Attaching a debugger is problaby not going to work. Let me know if you try!
 - I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Maybe. Let me know!
-- Some signatures are not supported, see the tests. Some have `#[hot]` commented out to indicate this
 - Only functions that exist when the app is launched are considered while hotpatching. This means that if you have a system `A` that calls a function `B`, 
   changing `B` will only work at runtime if that function existed already when the app was launched.
 - Does nothing on Wasm. This is not a technical limitation, just something we didn't implement yet.
-- Annotating a function relying on local state will clear it every frame. Notably, this means you should not use `#[hot]` on a system that uses any of the following:
-  - `EventReader`
-  - `Local`
-  - Queries filtering with `Added`, `Changed`, or `Spawned`
+
 
 ## Compatibility
 
