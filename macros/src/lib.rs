@@ -71,12 +71,12 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
     let hotpatched_fn = format_ident!("__{}_hotpatched", original_fn_name);
     let original_wrapper_fn = format_ident!("__{}_original", original_fn_name);
 
-    let mut newlines: u32 = 0;
-    for thing in block.span().unwrap().source_text().unwrap().chars() {
-        if thing == '\n' {
-            newlines += 1;
-        }
-    }
+    let newlines = if let Some(source_text) = block.span().unwrap().source_text() {
+        source_text.chars().filter(|ch| *ch == '\n').count() as u32
+    } else {
+        0
+    };
+
     // Capture parameter types, names, and mutability
     let mut param_types = Vec::new();
     let mut param_idents = Vec::new();
