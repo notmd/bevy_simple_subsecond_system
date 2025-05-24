@@ -4,10 +4,8 @@
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy_app::{App, Plugin, PreUpdate};
+use bevy_app::{App, Last, Plugin};
 use bevy_ecs::prelude::*;
-#[cfg(all(not(target_family = "wasm"), debug_assertions))]
-use bevy_ecs::system::{Commands, Res};
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
@@ -69,16 +67,12 @@ impl Plugin for SimpleSubsecondPlugin {
             app.init_resource::<HotPatchedSystems>();
 
             app.add_event::<HotPatched>().add_systems(
-                PreUpdate,
-                (
-                    move |mut events: EventWriter<HotPatched>| {
-                        if receiver.try_recv().is_ok() {
-                            events.write_default();
-                        }
-                    },
-                    update_system_ptr,
-                )
-                    .chain(),
+                Last,
+                move |mut events: EventWriter<HotPatched>| {
+                    if receiver.try_recv().is_ok() {
+                        events.write_default();
+                    }
+                },
             );
         }
     }
@@ -88,16 +82,12 @@ impl Plugin for SimpleSubsecondPlugin {
 #[derive(Event, Default)]
 pub struct HotPatched;
 
-#[cfg(all(not(target_family = "wasm"), debug_assertions))]
-fn update_system_ptr(hot_patched_systems: Res<HotPatchedSystems>, mut commands: Commands) {
-    for system in hot_patched_systems.0.values() {
-        commands.run_system(system.system_ptr_update_id);
-    }
-}
 #[doc(hidden)]
 pub mod __macros_internal {
+    pub use bevy_app::PreUpdate;
     use bevy_derive::{Deref, DerefMut};
     pub use bevy_ecs::{
+        schedule::Schedules,
         system::{IntoSystem, SystemId, SystemState},
         world::World,
     };
@@ -111,7 +101,6 @@ pub mod __macros_internal {
 
     #[doc(hidden)]
     pub struct __HotPatchedSystem {
-        pub system_ptr_update_id: SystemId,
         pub current_ptr: u64,
         pub last_ptr: u64,
     }
