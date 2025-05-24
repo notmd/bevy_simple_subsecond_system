@@ -1,3 +1,6 @@
+//! API for hot-patching new systems into your running app.
+//! See [`HotPatchedAppExt::with_hot_patch`] for the main API.
+
 use crate::__macros_internal::__ReloadPositions as ReloadPositions;
 use bevy_app::{
     App, NonSendMarker, PostStartup, PostUpdate, PreStartup, PreUpdate, Startup, Update,
@@ -49,9 +52,18 @@ pub trait HotPatchedAppExt {
     ///     .add_plugins(DefaultPlugins)
     ///     .add_plugins(SimpleSubsecondPlugin::default())
     ///     .with_hot_patch(|app: &mut App| {
+    ///         // Systems in the `StartupRerunHotPatch` schedule will be rerun on hot-reload.
+    ///         // They require `#[hot(hot_patch_signature = true)]`
+    ///         app.add_systems(StartupRerunHotPatch, setup);
+    ///         // All other systems do not require `#[hot]`.
     ///         app.add_systems(Update, my_system);
     ///         app.add_systems(PostUpdate, second_system);
     ///     });
+    ///
+    /// #[hot(hot_patch_signature = true)]
+    /// fn setup() {
+    ///
+    /// }
     ///
     /// fn my_system() {
     ///     info!("Hello, world!");
