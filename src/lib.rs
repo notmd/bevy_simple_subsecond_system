@@ -6,13 +6,12 @@ pub mod migration;
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
-use bevy_app::{App, Last, MainScheduleOrder, Plugin, PostStartup, PreUpdate};
+use bevy_app::{App, Last, Plugin, PostStartup, PreUpdate};
 use bevy_ecs::prelude::*;
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use dioxus_devtools::{subsecond::apply_patch, *};
-use prelude::MigrateComponents;
 
 pub mod hot_patched_app;
 
@@ -80,12 +79,11 @@ impl Plugin for SimpleSubsecondPlugin {
             );
 
             app.init_resource::<migration::ComponentMigrations>();
-            app.world_mut()
-                .resource_mut::<MainScheduleOrder>()
-                .insert_after(PreUpdate, MigrateComponents);
-
             app.add_systems(PostStartup, migration::register_migratable_components)
-                .add_systems(MigrateComponents, migration::migrate);
+                .add_systems(
+                    PreUpdate,
+                    migration::migrate.in_set(migration::MigrateComponentsSet),
+                );
         }
     }
 }

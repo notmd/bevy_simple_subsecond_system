@@ -20,6 +20,10 @@
 //! // When creating the app:
 //! // app.add_systems(Startup, register_components)
 //!
+//! # #[derive(Debug, Reflect, Component, Default, HotPatchMigrate)]
+//! # #[reflect(Component, Default, HotPatchMigrate)]
+//! # struct Example { }
+//!
 //! #[hot(rerun_on_hot_patch = true)]
 //! fn register_components(registry: Res<AppTypeRegistry>) {
 //!     let mut registry = registry.write();
@@ -35,7 +39,7 @@ use bevy_ecs::{
     query::QueryBuilder,
     reflect::{AppTypeRegistry, ReflectComponent},
     resource::Resource,
-    schedule::ScheduleLabel,
+    schedule::SystemSet,
     system::{Res, ResMut},
     world::World,
 };
@@ -70,7 +74,7 @@ pub trait HotPatchMigrate: Any + Component + Reflect + Default {
     fn current_type_id() -> TypeId;
 }
 
-/// [`TypeData`] corresponding to the [`HotPatchMigrate`] trait. It contains the
+/// [`bevy_reflect::TypeData`] corresponding to the [`HotPatchMigrate`] trait. It contains the
 /// [`HotPatchMigrate::current_type_id`] method. You don't need to use this
 /// directly for hot patching or struct migration.
 #[derive(Clone)]
@@ -82,8 +86,9 @@ impl<T: HotPatchMigrate> FromType<T> for ReflectHotPatchMigrate {
     }
 }
 
-#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct MigrateComponents;
+/// System set in which components are migrated after a hot patch.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MigrateComponentsSet;
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub(crate) struct ComponentMigrations(TypeIdMap<Arc<dyn Fn() -> TypeId + Sync + Send + 'static>>);

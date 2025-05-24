@@ -227,7 +227,7 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
             let contains_system = world.get_resource::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap().0.contains_key(&type_id);
             if !contains_system {
                 let hot_fn_ptr = #hot_fn.ptr_address();
-                world.resource_mut::<::bevy_simple_subsecond_system::__macros_internal::Schedules>().add_systems(::bevy_simple_subsecond_system::__macros_internal::PreUpdate, move |world: &mut ::bevy_simple_subsecond_system::__macros_internal::World| {
+                let system = move |world: &mut ::bevy_simple_subsecond_system::__macros_internal::World| {
                     let needs_update = {
                         let mut hot_patched_systems = world.get_resource_mut::<::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystems>().unwrap();
                         let mut hot_patched_system = hot_patched_systems.0.get_mut(&type_id).unwrap();
@@ -241,7 +241,8 @@ pub fn hot(attr: TokenStream, item: TokenStream) -> TokenStream {
                     }
                     // TODO: we simply ignore the `Result` here, but we should be propagating it
                     let _ = {#maybe_run_call};
-                });
+                };
+                world.resource_mut::<::bevy_simple_subsecond_system::__macros_internal::Schedules>().add_systems(::bevy_simple_subsecond_system::__macros_internal::PreUpdate, system.before(::bevy_simple_subsecond_system::migration::MigrateComponentsSet));
                 let system = ::bevy_simple_subsecond_system::__macros_internal::__HotPatchedSystem {
                     current_ptr: hot_fn_ptr,
                     last_ptr: hot_fn_ptr,
