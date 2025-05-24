@@ -61,8 +61,9 @@ pub trait HotPatchedAppExt {
     ///     });
     ///
     /// #[hot(hot_patch_signature = true)]
-    /// fn setup() {
-    ///
+    /// fn setup(mut commands: Commands) {
+    ///     commands.spawn(Camera2d::default());
+    ///     commands.spawn(Text::new("Hello, world!"));
     /// }
     ///
     /// fn my_system() {
