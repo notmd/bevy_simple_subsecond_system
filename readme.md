@@ -185,6 +185,8 @@ There are some more things you can hot-patch, but they come with extra caveats r
   - Queries filtering with `Added`, `Changed`, or `Spawned`
 - Some signatures are not supported, see the tests. Some have `#[hot]` commented out to indicate this
 - All hotpatched systems run as exclusive systems, meaning they won't run in parallel
+- For component migration:
+  - While top level component definitions can be changed and renamed (and will be migrated if using `HotPatchMigrate`), changing definitions of the types used as fields of the components isn't supported. It might work in some cases but most probably will be an undefined behaviour
 </details>
 
 
@@ -229,8 +231,7 @@ This allows you to e.g. add additional `Query` or `Res` parameters or modify exi
 - I did not test all possible ways in which systems can be used. Does piping work? Does `bevy_mod_debugdump` still work? Maybe. Let me know!
 - Only functions that exist when the app is launched are considered while hotpatching. This means that if you have a system `A` that calls a function `B`, 
   changing `B` will only work at runtime if that function existed already when the app was launched.
-- Does nothing on Wasm. This is not a technical limitation, just something we didn't implement yet.
-- While top level component definitions can be changed and renamed (and will be migrated if using `HotPatchMigrate`), changing definitions of the types used as fields of the components isn't supported. It might work in some cases but most probably will be an undefined behaviour.
+- Does nothing on Wasm. This is not a technical limitation, just something we didn't implement yet..
 
 ## Compatibility
 
