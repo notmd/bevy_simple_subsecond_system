@@ -39,7 +39,6 @@ use bevy_ecs::{
     query::QueryBuilder,
     reflect::{AppTypeRegistry, ReflectComponent},
     resource::Resource,
-    schedule::SystemSet,
     system::{Res, ResMut},
     world::World,
 };
@@ -85,10 +84,6 @@ impl<T: HotPatchMigrate> FromType<T> for ReflectHotPatchMigrate {
         Self(Arc::new(T::current_type_id))
     }
 }
-
-/// System set in which components are migrated after a hot patch.
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct MigrateComponentsSet;
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub(crate) struct ComponentMigrations(TypeIdMap<Arc<dyn Fn() -> TypeId + Sync + Send + 'static>>);
