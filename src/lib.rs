@@ -4,8 +4,15 @@
 
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
 use __macros_internal::__HotPatchedSystems as HotPatchedSystems;
+<<<<<<< HEAD
 use bevy_app::{App, Last, Plugin};
 use bevy_ecs::prelude::*;
+=======
+use bevy_app::{App, Plugin, PreUpdate};
+use bevy_ecs::prelude::*;
+#[cfg(all(not(target_family = "wasm"), debug_assertions))]
+use bevy_ecs::system::{Commands, Res};
+>>>>>>> main
 pub use bevy_simple_subsecond_system_macros::*;
 pub use dioxus_devtools;
 #[cfg(all(not(target_family = "wasm"), debug_assertions))]
