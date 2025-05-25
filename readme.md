@@ -100,8 +100,7 @@ If you prefer to use `mold`, you can set it up like this:
 [target.x86_64-unknown-linux-gnu]
 #linker = clang
 rustflags = [
-  "-C",
-  "link-arg=-fuse-ld=mold",
+  "-Clink-arg=-fuse-ld=mold",
 ]
 ```
 Note that the `linker` key needs to be commented out.
