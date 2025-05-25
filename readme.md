@@ -20,7 +20,7 @@ Please report all hotpatch-related problems to them :)
 First, we need to install a recent version of the Dioxus CLI.
 
 ```sh
-cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus --rev b2bd1f48d434becfff9f0ea390ad8ef46996300a
+cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus --rev b2bd1f
 ```
 
 Depending on your OS, you'll have to set up your environment a bit more:
