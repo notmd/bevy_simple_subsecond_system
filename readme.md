@@ -182,6 +182,46 @@ e.g.
 dx serve --hot-patch --example patch_on_update
 ```
 
+## Language Servers
+
+In general, rust analyzer for VS Code will play nice with the `#[hot]` attribute.
+If you're running into issues, you can add the following to your VS Code settings:
+<details><summary>settings.json</summary>
+
+```json
+"rust-analyzer.procMacro.ignored": {
+    "bevy_simple_subsecond_system_macros": [
+        "hot"
+    ]
+},
+"rust-analyzer.diagnostics.disabled": [
+    "proc-macro-disabled"
+]
+```
+</details>
+<br/>
+For LSP-based workflows, use the following:
+
+<details><summary>LSP</summary>
+
+```lua
+lspconfig.rust_analyzer.setup({
+  capabilities = capabilities,
+  settings = {
+    ["rust-analyzer"] = {
+      procMacro = {
+        ignored = {
+          bevy_simple_subsecond_system_macros = { "hot" },
+        },
+      },
+      diagnostics = {
+        disabled = { "proc-macro-disabled" },
+      },
+    },
+  },
+})
+```
+</details>
 
 
 ## Advanced Usage
