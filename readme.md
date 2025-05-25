@@ -162,6 +162,9 @@ Now run your app with
 dx serve --hot-patch
 ```
 
+Note that changing the `greet` function's signature by e.g. adding a new parameter will still require a restart.
+In general, you can only change the code *inside* the function at runtime. See the *Advanced Usage* section for more.
+
 ## Examples
 
 Run the examples with
@@ -217,15 +220,12 @@ This allows you to e.g. add additional `Query` or `Res` parameters or modify exi
 ## Features
 
 - Change systems' code and see the effect live at runtime
-- Change system signatures at runtime, e.g. by adding a new query or modifying an existing one
 - If your system calls other functions, you can also change those functions' code at runtime
-- Rerun setup systems automatically when changing them
 - Extremely small API: You only need the plugin struct and the `#[hot]` attribute
 - Automatically compiles itself out on release builds and when targetting Wasm. The `#[hot]` attribute does simply nothing on such builds.
 
 ## Known Limitations
 
-- Cannot [combine mold as your Rust linker with a global target dir](https://github.com/DioxusLabs/dioxus/issues/4149)
 - A change in the definition of structs that appear in hot-patched systems at runtime will result in your query failing to match, as that new type does not exist in `World` yet.
   - Practically speaking, this means you should not change the definition of `Resource`s and `Component`s of your system at runtime
 - Only [the topmost binary is hotpatched](https://github.com/DioxusLabs/dioxus/issues/4160), meaning your app is not allowed to have a `lib.rs` or a workspace setup.
