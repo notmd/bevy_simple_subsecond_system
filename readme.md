@@ -31,7 +31,7 @@ Windows
 </summary>
 
 If you're lucky, you don't need to change anything.
-However, some users get issues with their path lengh.
+However, some users may experience issues with their path length.
 If that happens, move your crate closer to your drive, e.g. `C:\my_crate`.
 If that is not enough, set the following in your `~\.cargo\config.toml`:
 ```toml
