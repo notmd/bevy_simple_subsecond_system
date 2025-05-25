@@ -162,6 +162,8 @@ Now run your app with
 dx serve --hot-patch
 ```
 
+Now try changing that string at runtime and then check your logs!
+
 Note that changing the `greet` function's signature by e.g. adding a new parameter will still require a restart.
 In general, you can only change the code *inside* the function at runtime. See the *Advanced Usage* section for more.
 
