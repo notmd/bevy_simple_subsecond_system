@@ -65,7 +65,7 @@ Execute the following:
 readlink -f "$(which cc)"
 ```
 If this points to `clang`, you're good. Otherwise, we'll need to symlink it.
-Read the path returned by the following
+Read the path returned by the following command:
 ```
 which cc
 ```
