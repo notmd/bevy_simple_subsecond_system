@@ -25,8 +25,6 @@ cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus --rev b2bd1f
 
 Depending on your OS, you'll have to set up your environment a bit more
 
-> In case you already configured a linker, setting `rustflags = ["-C", "link-arg=-fuse-ld=/path/to/your/linker"]` is surprisingly [not enough](https://github.com/DioxusLabs/dioxus/issues/4146)!
-
 <details>
 <summary>
 Windows
