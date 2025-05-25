@@ -132,10 +132,10 @@ pkgs.mkShell.override {
 
 ## Usage
 
-Add the crate to your dependencies:
+Add the crate to your dependencies. Make sure to depend on the git version:
 
 ```sh
-cargo add bevy_simple_subsecond_system
+cargo add bevy_simple_subsecond_system --git https://github.com/TheBevyFlock/bevy_simple_subsecond_system
 ```
 
 Then add the plugin to your app and annotate any system you want with `#[hot]`:
