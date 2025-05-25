@@ -90,8 +90,7 @@ Now everything should work. If not, install `lld` on your system and add the fol
 ```toml
 [target.x86_64-unknown-linux-gnu]
 rustflags = [
-  "-C",
-  "link-arg=-fuse-ld=lld",
+  "-Clink-arg=-fuse-ld=lld",
 ]
 ```
 
