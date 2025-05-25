@@ -69,7 +69,7 @@ Read the path returned by the following command:
 ```
 which cc
 ```
-and `cd` into it. For example
+and `cd` into it. For example,
 
 ```
 which cc
