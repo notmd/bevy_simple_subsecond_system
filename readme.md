@@ -77,7 +77,7 @@ which cc
 cd /usr/bin
 ```
 
-assuming you have `clang` installed, use
+Assuming you have `clang` installed, run the following commands:
 
 ```
 unlink cc
