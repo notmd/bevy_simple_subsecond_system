@@ -66,7 +66,7 @@ readlink -f "$(which cc)"
 ```
 If this points to `clang`, you're good. Otherwise, we'll need to symlink it.
 Read the path returned by the following command:
-```
+```sh
 which cc
 ```
 and `cd` into it. For example,
@@ -79,7 +79,7 @@ $ cd /usr/bin
 
 Assuming you have `clang` installed, run the following commands:
 
-```
+```sh
 mv cc cc-real
 ln -s "$(which clang)" cc
 ```
