@@ -80,8 +80,8 @@ $ cd /usr/bin
 Assuming you have `clang` installed, run the following commands:
 
 ```
-unlink cc
-ln -s $(which clang) cc
+mv cc cc-real
+ln -s "$(which clang)" cc
 ```
 Note that the above commands may require `sudo`.
 
