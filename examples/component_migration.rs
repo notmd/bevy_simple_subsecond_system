@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_systems(Startup, setup)
         .add_systems(Startup, register_components)
         .add_systems(Update, print_components)
-        .run();
+        .run()
 }
 
 fn setup(mut commands: Commands) {

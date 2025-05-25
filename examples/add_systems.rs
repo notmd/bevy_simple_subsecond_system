@@ -1,7 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_simple_subsecond_system::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
@@ -18,7 +18,7 @@ fn main() {
                 change_text.run_if(input_just_pressed(KeyCode::Space)),
             );
         })
-        .run();
+        .run()
 }
 
 #[hot(hot_patch_signature = true)]

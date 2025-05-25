@@ -144,12 +144,12 @@ Then add the plugin to your app and annotate any system you want with `#[hot]`:
 use bevy::prelude::*;
 use bevy_simple_subsecond_system::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SimpleSubsecondPlugin::default())
         .add_systems(Update, greet)
-        .run();
+        .run()
 }
 
 #[hot]
