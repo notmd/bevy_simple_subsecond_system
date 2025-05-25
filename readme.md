@@ -17,7 +17,7 @@ Please report all hotpatch-related problems to them :)
 
 ## First Time Installation
 
-First, we need to install the Dioxus CLI of the newest alpha build.
+First, we need to install a recent version of the Dioxus CLI.
 
 ```sh
 cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus --rev b2bd1f48d434becfff9f0ea390ad8ef46996300a
