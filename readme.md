@@ -38,7 +38,7 @@ If that is not enough, set the following in your `~\.cargo\config.toml`:
 [profile.dev]
 codegen-units = 1
 ```
-Note that this increases compile times by a lot. If you can verify that this solved your issue,
+Note that this may increase compile times significantly if your crate is very large. If you can verify that this solved your issue,
 try increasing this number until you find a happy middle ground. For reference, the default number
 for incremental builds is `256`, for non-incremental builds `16`.
 
