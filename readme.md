@@ -98,7 +98,7 @@ If you prefer to use `mold`, you can set it up like this:
 
 ```toml
 [target.x86_64-unknown-linux-gnu]
-# linker = clang
+#linker = clang
 rustflags = [
   "-C",
   "link-arg=-fuse-ld=mold",
