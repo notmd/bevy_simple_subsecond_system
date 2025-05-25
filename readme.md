@@ -106,7 +106,6 @@ rustflags = [
 ```
 Note that the `linker` key needs to be commented out.
 You will also need to replace your system `ld` with `mold`.
-The most brutal way to do this is:
 ```sh
 cd /usr/bin
 sudo mv ld ld-real
