@@ -23,7 +23,7 @@ First, we need to install the Dioxus CLI of the newest alpha build.
 cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus --rev b2bd1f48d434becfff9f0ea390ad8ef46996300a
 ```
 
-Depending on your OS, you'll have to set up your environment a bit more
+Depending on your OS, you'll have to set up your environment a bit more:
 
 <details>
 <summary>
