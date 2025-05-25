@@ -71,10 +71,10 @@ which cc
 ```
 and `cd` into it. For example,
 
-```
-which cc
-> /usr/bin/cc
-cd /usr/bin
+```sh
+$ which cc
+/usr/bin/cc
+$ cd /usr/bin
 ```
 
 Assuming you have `clang` installed, run the following commands:
