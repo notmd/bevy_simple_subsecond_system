@@ -230,7 +230,6 @@ This allows you to e.g. add additional `Query` or `Res` parameters or modify exi
 ## Known Limitations
 
 - Cannot [combine mold as your Rust linker with a global target dir](https://github.com/DioxusLabs/dioxus/issues/4149)
-- Using this [breaks dynamic linking](https://github.com/DioxusLabs/dioxus/issues/4154)
 - A change in the definition of structs that appear in hot-patched systems at runtime will result in your query failing to match, as that new type does not exist in `World` yet.
   - Practically speaking, this means you should not change the definition of `Resource`s and `Component`s of your system at runtime
 - Only [the topmost binary is hotpatched](https://github.com/DioxusLabs/dioxus/issues/4160), meaning your app is not allowed to have a `lib.rs` or a workspace setup.
