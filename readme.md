@@ -152,7 +152,10 @@ fn main() {
 
 #[hot]
 fn greet(time: Res<Time>) {
-    info_once!("Hello from a hotpatched system! Try changing this string while the app is running! Patched at t = {} s", time.elapsed_secs());
+    info_once!(
+        "Hello from a hotpatched system! Try changing this string while the app is running! Patched at t = {} s",
+        time.elapsed_secs()
+    );
 }
 ```
 
