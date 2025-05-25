@@ -64,7 +64,7 @@ Execute the following:
 ```sh
 readlink -f $(which cc)
 ```
-If this points to either gcc or clang, you're good. Otherwise, we'll need to symlink it.
+If this points to `clang`, you're good. Otherwise, we'll need to symlink it.
 Read the path returned by the following
 ```
 which cc
