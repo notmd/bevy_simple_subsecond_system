@@ -96,7 +96,10 @@ rustflags = [
 ]
 ```
 
-If you prefer to use `mold`, you can set it up like this:
+## Mold
+
+Subsecond works best with `lld` right now, so we recommend using that linker.
+If you want to try using `mold`, you can set it up like this:
 
 ```toml
 [target.x86_64-unknown-linux-gnu]
