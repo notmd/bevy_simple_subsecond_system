@@ -83,7 +83,6 @@ assuming you have `clang` installed, use
 unlink cc
 ln -s $(which clang) cc
 ```
-replace `clang` by `gcc` if you prefer.
 Note that the above commands may require `sudo`.
 
 Now everything should work. If not, install `lld` on your system and add the following to your `~/.cargo/config.toml`:
