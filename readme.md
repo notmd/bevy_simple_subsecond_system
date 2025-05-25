@@ -232,11 +232,11 @@ There are some more things you can hot-patch, but they come with extra caveats r
 <details>
 <summary>Limitations when using these features</summary>
 
-- Annotating a function relying on local state will clear it every frame. Notably, this means you should not use `#[hot]` on a system that uses any of the following:
+- Annotating a function relying on local state will clear it every frame. Notably, this means you should not use `#[hot(rerun_on_hot_patch)]` or `#[hot(hot_patch_signature)]` on a system that uses any of the following:
   - `EventReader`
   - `Local`
   - Queries filtering with `Added`, `Changed`, or `Spawned`
-- Some signatures are not supported, see the tests. Some have `#[hot]` commented out to indicate this
+- Some signatures are not supported, see the tests. Some have `#[hot(rerun_on_hot_patch)]` or `#[hot(hot_patch_signature)]` commented out to indicate this
 - All hotpatched systems run as exclusive systems, meaning they won't run in parallel
 - For component migration:
   - While top level component definitions can be changed and renamed (and will be migrated if using `HotPatchMigrate`), changing definitions of the types used as fields of the components isn't supported. It might work in some cases but most probably will be an undefined behaviour
