@@ -33,7 +33,7 @@ Windows
 If you're lucky, you don't need to change anything.
 However, some users get issues with their path lengh.
 If that happens, move your crate closer to your drive, e.g. `C:\my_crate`.
-If that still does not help, set the following in your `~/.cargo/config.toml`:
+If that is not enough, set the following in your `~\.cargo\config.toml`:
 ```toml
 [profile.dev]
 codegen-units = 1
