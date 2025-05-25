@@ -42,7 +42,7 @@ Note that this increases compile times by a lot. If you can verify that this sol
 try increasing this number until you find a happy middle ground. For reference, the default number
 for incremental builds is `256`, for non-incremental builds `16`.
 
-You're also not allowed to use `linker = "rust-lld.exe"`, as the subsecond currently crashes when `linker` is set.
+You're also not allowed to use `linker = "rust-lld.exe"`, as subsecond currently crashes when `linker` is set.
 
 </details>
 
