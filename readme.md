@@ -17,61 +17,13 @@ Please report all hotpatch-related problems to them :)
 
 ## First Time Installation
 
-First, we'll install [cargo-binstall](https://github.com/cargo-bins/cargo-binstall). It's not strictly required, but it will make the setup much quicker.
-Click your OS below on instructions for how to do this
-<details>
-<summary>
-Windows
-</summary>
-
-```pwsh
-Set-ExecutionPolicy Unrestricted -Scope Process; iex (iwr "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content
-```
-
-</details>
-
-<details>
-<summary>
-macOS
-</summary>
+First, we need to install the Dioxus CLI of the newest alpha build.
 
 ```sh
-brew install cargo-binstall
-```
-or, if you don't use `brew`, same as on Linux.
-</details>
-
-<details>
-<summary>
-Linux
-</summary>
-
-```sh
-curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-```
-</details>
-<details>
-<summary>
-Build from source
-</summary>
-
-```sh
-cargo install cargo-binstall
-```
-</details>
-
-Now, we need to install the Dioxus CLI of the newest alpha build.
-```sh
-cargo binstall dioxus-cli@0.7.0-alpha.0
+cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus --rev b2bd1f48d434becfff9f0ea390ad8ef46996300a
 ```
 
-Windows users need to install from a specific branch for now:
-```sh
-cargo install dioxus-cli --git https://github.com/DioxusLabs/dioxus/ --branch jk/fix-dyn-link-subsecond
-```
-
-Then make sure you're not using [LD as your linker](https://github.com/DioxusLabs/dioxus/issues/4144).
-Click your OS below on instructions for how to do this
+Depending on your OS, you'll have to set up your environment a bit more
 
 > In case you already configured a linker, setting `rustflags = ["-C", "link-arg=-fuse-ld=/path/to/your/linker"]` is surprisingly [not enough](https://github.com/DioxusLabs/dioxus/issues/4146)!
 
@@ -80,7 +32,19 @@ Click your OS below on instructions for how to do this
 Windows
 </summary>
 
-The linker should work out of the box, but there may be issues with path lengths.
+If you're lucky, you don't need to change anything.
+However, some users get issues with their path lengh.
+If that happens, move your crate closer to your drive, e.g. `C:\my_crate`.
+If that still does not help, set the following in your `~/.cargo/config.toml`:
+```toml
+[profile.dev]
+codegen-units = 1
+```
+Note that this increases compile times by a lot. If you can verify that this solved your issue,
+try increasing this number until you find a happy middle ground. For reference, the default number
+for incremental builds is `256`, for non-incremental builds `16`.
+
+You're also not allowed to use `linker = "rust-lld.exe"`, as the subsecond currently crashes when `linker` is set.
 
 </details>
 
@@ -89,7 +53,8 @@ The linker should work out of the box, but there may be issues with path lengths
 macOS
 </summary>
 
-You're in luck! The default linker on macOS is already something other than LD. You don't have to change a thing :)
+You're in luck! Everything should work out of the box if you use the default system linker.
+
 </details>
 
 <details>
@@ -97,11 +62,55 @@ You're in luck! The default linker on macOS is already something other than LD. 
 Linux
 </summary>
 
-Download `clang` and [`mold`](https://github.com/rui314/mold) for your distribution, e.g.
+Execute the following:
 ```sh
-sudo apt-get install clang mold
+readlink -f $(which cc)
 ```
-Then, replace your system `ld` with a symlink to `mold`. The most brutal way to do this is:
+If this points to either gcc or clang, you're good. Otherwise, we'll need to symlink it.
+Read the path returned by the following
+```
+which cc
+```
+and `cd` into it. For example
+
+```
+which cc
+> /usr/bin/cc
+cd /usr/bin
+```
+
+assuming you have `clang` installed, use
+
+```
+unlink cc
+ln -s $(which clang) cc
+```
+replace `clang` by `gcc` if you prefer.
+Note that the above commands may require `sudo`.
+
+Now everything should work. If not, install `lld` on your system and add the following to your `~/.cargo/config.toml`:
+
+```toml
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+  "-C",
+  "link-arg=-fuse-ld=lld",
+]
+```
+
+If you prefer to use `mold`, you can set it up like this:
+
+```toml
+[target.x86_64-unknown-linux-gnu]
+# linker = clang
+rustflags = [
+  "-C",
+  "link-arg=-fuse-ld=mold",
+]
+```
+Note that the `linker` key needs to be commented out.
+You will also need to replace your system `ld` with `mold`.
+The most brutal way to do this is:
 ```sh
 cd /usr/bin
 sudo mv ld ld-real
@@ -168,7 +177,7 @@ dx serve --hot-patch --example name_of_the_example
 
 e.g.
 ```sh
-dx serve --hot-patch --example rerun_setup
+dx serve --hot-patch --example patch_on_update
 ```
 
 
