@@ -4,7 +4,7 @@
 [![docs.rs](https://docs.rs/bevy_simple_subsecond_system/badge.svg)](https://docs.rs/bevy_simple_subsecond_system)
 
 
-Hotpatch your Bevy systems, allowing you to change their code while the app is running and directly see the results!
+Hotpatch your Bevy systems and observers, allowing you to change their code while the app is running and directly see the results!
 This is an intermediate solution you can use until [Bevy implements this feature upstream](https://github.com/bevyengine/bevy/issues/19296).
 
 Powered by [Dioxus' subsecond](https://github.com/DioxusLabs/dioxus/releases/tag/v0.7.0-alpha.0#rust-hot-patching)  
@@ -266,7 +266,7 @@ This allows you to e.g. add additional `Query` or `Res` parameters or modify exi
 
 ## Features
 
-- Change systems' code and see the effect live at runtime
+- Change systems' and observers' code and see the effect live at runtime
 - If your system calls other functions, you can also change those functions' code at runtime
 - Extremely small API: You only need the plugin struct and the `#[hot]` attribute
 - Automatically compiles itself out on release builds and when targetting Wasm. The `#[hot]` attribute does simply nothing on such builds.

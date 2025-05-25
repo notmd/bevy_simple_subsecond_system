@@ -11,45 +11,51 @@ use bevy_simple_subsecond_system::prelude::*;
 
 #[test]
 fn add_to_app() {
-    App::new().add_systems(
-        Update,
-        (
+    App::new()
+        .add_systems(
+            Update,
             (
-                empty_system,
-                system_with_commands,
-                system_with_commands_mut,
-                system_with_zst_query,
-                system_with_readonly_query,
-                system_with_mut_query,
-                system_with_mixed_query,
-                system_with_single_query,
-                system_with_resource,
-                system_with_resource_and_query,
-                system_with_mut_resource,
-                system_with_mut_resource_and_query,
-                system_with_mut_resource_and_mut_query,
-                system_with_mut_resource_and_single_query,
-                system_with_mut_resource_and_mut_single_query,
-                system_with_mut_resource_and_mut_single_query_rerun_true,
-                system_with_mut_resource_and_mut_single_query_rerun_false,
+                (
+                    empty_system,
+                    system_with_commands,
+                    system_with_commands_mut,
+                    system_with_zst_query,
+                    system_with_readonly_query,
+                    system_with_mut_query,
+                    system_with_mixed_query,
+                    system_with_single_query,
+                    system_with_resource,
+                    system_with_resource_and_query,
+                    system_with_mut_resource,
+                    system_with_mut_resource_and_query,
+                    system_with_mut_resource_and_mut_query,
+                    system_with_mut_resource_and_single_query,
+                    system_with_mut_resource_and_mut_single_query,
+                    system_with_mut_resource_and_mut_single_query_rerun_true,
+                    system_with_mut_resource_and_mut_single_query_rerun_false,
+                ),
+                (
+                    system_with_return_value,
+                    system_with_aliased_return,
+                    system_with_generic::<Transform>,
+                    system_with_generic_and_exclusive::<Transform>,
+                    system_with_generic_static_and_exclusive::<Transform>,
+                    system_with_generic_non_static_and_exclusive::<Transform>,
+                    system_with_generic_and_exclusive_mut::<Transform>,
+                    save_to_previous::<Transform>,
+                    apply_config::<DevConfig>,
+                    exclusive_mut,
+                    exclusive,
+                    force_loading_screen.pipe(ignore_progress),
+                    wait_in_screen(1.0),
+                ),
             ),
-            (
-                system_with_return_value,
-                system_with_aliased_return,
-                system_with_generic::<Transform>,
-                system_with_generic_and_exclusive::<Transform>,
-                system_with_generic_static_and_exclusive::<Transform>,
-                system_with_generic_non_static_and_exclusive::<Transform>,
-                system_with_generic_and_exclusive_mut::<Transform>,
-                save_to_previous::<Transform>,
-                apply_config::<DevConfig>,
-                exclusive_mut,
-                exclusive,
-                force_loading_screen.pipe(ignore_progress),
-                wait_in_screen(1.0),
-            ),
-        ),
-    );
+        )
+        .add_observer(observe_add)
+        .add_observer(observe_add_with_query)
+        .add_observer(observe_add_with_mut_query)
+        .add_observer(observe_add_with_mut_query_and_resource)
+        .add_observer(observe_add_with_mut_query_and_resource_and_commands);
 }
 
 #[hot]
@@ -200,4 +206,34 @@ impl Config for DevConfig {}
 pub struct Progress {
     pub done: u32,
     pub total: u32,
+}
+
+#[hot]
+fn observe_add(_trigger: Trigger<OnAdd, Transform>) {}
+
+#[hot]
+fn observe_add_with_query(_trigger: Trigger<OnAdd, Transform>, query: Query<&Transform>) {}
+
+#[hot]
+fn observe_add_with_mut_query(
+    _trigger: Trigger<OnAdd, Transform>,
+    mut query: Query<&mut Transform>,
+) {
+}
+
+#[hot]
+fn observe_add_with_mut_query_and_resource(
+    _trigger: Trigger<OnAdd, Transform>,
+    mut query: Query<&mut Transform>,
+    resource: ResMut<Time>,
+) {
+}
+
+#[hot]
+fn observe_add_with_mut_query_and_resource_and_commands(
+    _trigger: Trigger<OnAdd, Transform>,
+    mut query: Query<&mut Transform>,
+    resource: ResMut<Time>,
+    mut commands: Commands,
+) {
 }
