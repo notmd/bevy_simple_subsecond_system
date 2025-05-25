@@ -244,4 +244,4 @@ This allows you to e.g. add additional `Query` or `Res` parameters or modify exi
 
 | bevy        | bevy_simple_subsecond_system |
 |-------------|------------------------|
-| 0.16        | 0.1                    |
+| 0.16        | 0.2                    |
